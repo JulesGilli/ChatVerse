@@ -1,10 +1,55 @@
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import viteLogo from '../public/vite.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch('http://localhost:5050/api/users'); // API backend
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP : ${response.status}`);
+                }
+                const data = await response.json();
+                setUsers(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    if (loading) {
+        return <p>Chargement...</p>;
+    }
+
+    if (error) {
+        return <p>Erreur (comme d'hab) : {error}</p>;
+    }
+
+    return (
+        <div>
+            <h1>Liste des utilisateurs</h1>
+            <ul>
+                {users.map((user) => (
+                    <li key={user._id}>
+                        {user.name} - {user.email}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+
+  /* const [count, setCount] = useState(0)
 
   return (
     <>
@@ -29,7 +74,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  ) */
 }
 
 export default App
