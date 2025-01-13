@@ -1,52 +1,59 @@
 import React, { useEffect, useState } from 'react'
+import { io } from 'socket.io-client'
 import reactLogo from './assets/react.svg'
 import viteLogo from '../public/vite.svg'
 import './App.css'
 
 function App() {
 
-  const [users, setUsers] = useState([]);
+  /* const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await fetch('http://localhost:5050/api/users'); // API backend
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP : ${response.status}`);
-                }
-                const data = await response.json();
-                setUsers(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+        const socket = io('http://localhost:5050');
+        socket.emit('displayUsers');
 
-        fetchUsers();
-    }, []);
-
-    if (loading) {
-        return <p>Chargement...</p>;
-    }
-
-    if (error) {
-        return <p>Erreur (comme d'hab) : {error}</p>;
-    }
-
+        socket.on("userId", (data) => {
+          if(data.error){
+            setError(data.error);
+          }else{
+            setUsers(data);
+          }
+        });
+    }, []); */
+    const [users, setUsers] = useState([]);
+    const [socket, setSocket] = useState(null);
+  
+    useEffect(() => {
+      // Créer une connexion socket une seule fois
+      const newSocket = io("http://localhost:5050");
+      setSocket(newSocket);
+  
+      // Gérer les événements socket
+      newSocket.on("connect", () => {
+        console.log(`Connecté avec l'ID : ${newSocket.id}`);
+      });
+  
+      newSocket.on("updateUsers", (data) => {
+        setUsers(data);
+      });
+  
+      // Nettoyer la connexion socket lorsque le composant est démonté
+      return () => {
+        newSocket.disconnect();
+      };
+    }, []); // Le tableau vide [] garantit que ce useEffect est exécuté une seule fois
+  
     return (
-        <div>
-            <h1>Liste des utilisateurs</h1>
-            <ul>
-                {users.map((user) => (
-                    <li key={user._id}>
-                        {user.name} - {user.email}
-                    </li>
-                ))}
-            </ul>
-        </div>
+      <div>
+        <h1>Liste des utilisateurs connectés</h1>
+        <ul>
+          {users.map((user, index) => (
+            <li key={index}>{user.name}</li>
+          ))}
+        </ul>
+      </div>
     );
 
   /* const [count, setCount] = useState(0)
