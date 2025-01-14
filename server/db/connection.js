@@ -1,4 +1,6 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
+const { MongoClient, ServerApiVersion } = require("mongodb");
+
+
  
 const uri = process.env.ATLAS_URI || "";
 const client = new MongoClient(uri, {
@@ -9,18 +11,16 @@ const client = new MongoClient(uri, {
   },
 });
  
-try {
-  // Connect the client to the server
-  await client.connect();
-  // Send a ping to confirm a successful connection
-  await client.db("admin").command({ ping: 1 });
-  console.log(
-   "Pinged your deployment. You successfully connected to MongoDB!"
-  );
-} catch(err) {
-  console.error(err);
+// Fonction pour connecter à la base de données
+async function connectToDatabase() {
+  try {
+    await client.connect();
+    console.log("Connecté à MongoDB !");
+    return client; // On retourne le client pour l'utiliser ailleurs
+  } catch (err) {
+    console.error("Erreur de connexion à MongoDB :", err);
+    process.exit(1); // Arrêter le processus en cas d'erreur critique
+  }
 }
- 
-let db = client.db("employees");
- 
-export default db;
+
+module.exports = connectToDatabase;

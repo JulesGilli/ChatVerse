@@ -1,15 +1,69 @@
-import express from "express";
-import cors from "cors";
-import records from "./routes/record.js";
- 
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const Message = require("./models/Message");
+
 const PORT = process.env.PORT || 5050;
+const mongoUri = process.env.ATLAS_URI;
+
 const app = express();
- 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // Adresse du frontend
+    methods: ["GET", "POST"],
+  },
+});
+
+/* const connectDb = require('./db/connection'); */
+
+let connectedUsers = [];
+
+
 app.use(cors());
 app.use(express.json());
-app.use("/record", records);
- 
+
+mongoose.connect(mongoUri, {})
+.then(()=>console.log('mongoDb connect'))
+.catch((err)=>console.error('mongoDb no connect :', err));
+
+io.on('connection', async (socket) => {
+  console.log('Un user est log');
+  connectedUsers.push({name: "user"+socket.id});
+  
+  io.emit("updateUsers", connectedUsers);
+
+  const messageHistory = await Message.find();
+  socket.emit('messageHistory', messageHistory);
+
+  socket.on('sendMessage', async (data) => {
+    try{
+      const newMessage = new Message({
+        userId: data.userId,
+        content: data.content,
+      });
+      await newMessage.save();
+
+      io.emit("newMessage", newMessage);
+    }catch(err){
+      console.error("Erreur lors de l'enregistrement du message :", err);
+    }
+  });
+  
+  socket.on('disconnect', () => {
+    console.log("un user c'est déco");
+    connectedUsers = connectedUsers.filter((user) => user.name !== "user"+socket.id);
+
+    io.emit("updateUsers", connectedUsers);
+  });
+
+});
+
 // start the Express server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
