@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
 
+const Message = require("./models/Message");
+
 const PORT = process.env.PORT || 5050;
 const mongoUri = process.env.ATLAS_URI;
 
@@ -27,13 +29,30 @@ app.use(express.json());
 
 mongoose.connect(mongoUri, {})
 .then(()=>console.log('mongoDb connect'))
-.catch((err)=>console.error('mongoDb no connect :', err))
+.catch((err)=>console.error('mongoDb no connect :', err));
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('Un user est log');
   connectedUsers.push({name: "user"+socket.id});
   
   io.emit("updateUsers", connectedUsers);
+
+  const messageHistory = await Message.find();
+  socket.emit('messageHistory', messageHistory);
+
+  socket.on('sendMessage', async (data) => {
+    try{
+      const newMessage = new Message({
+        userId: data.userId,
+        content: data.content,
+      });
+      await newMessage.save();
+
+      io.emit("newMessage", newMessage);
+    }catch(err){
+      console.error("Erreur lors de l'enregistrement du message :", err);
+    }
+  });
   
   socket.on('disconnect', () => {
     console.log("un user c'est déco");

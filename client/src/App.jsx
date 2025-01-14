@@ -5,83 +5,83 @@ import viteLogo from '../public/vite.svg'
 import './App.css'
 
 function App() {
+  const [socket, setSocket] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [messagesHistory, setHistoryMessage] = useState([]);
+  const [message, setMessage] = useState(''); // Contient le message que l'utilisateur tape
+  const [messages, setMessages] = useState([]); // Liste des messages reçus
 
-  /* const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  useEffect(() => {
+    const newSocket = io('http://localhost:5050');
+    setSocket(newSocket);
 
-    useEffect(() => {
-        const socket = io('http://localhost:5050');
-        socket.emit('displayUsers');
+    newSocket.on('connect', () => {
+      console.log(`Connecté avec l'ID : ${newSocket.id}`);
+    });
 
-        socket.on("userId", (data) => {
-          if(data.error){
-            setError(data.error);
-          }else{
-            setUsers(data);
-          }
-        });
-    }, []); */
-    const [users, setUsers] = useState([]);
-    const [socket, setSocket] = useState(null);
+    newSocket.on('updateUsers', (data) => {
+      setUsers(data);
+    });
+
+    newSocket.on('newMessage', (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage]); // Met à jour la liste des messages
+    });
+
+    newSocket.on('messageHistory', (data) => {
+      setHistoryMessage(data);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
   
-    useEffect(() => {
-      // Créer une connexion socket une seule fois
-      const newSocket = io("http://localhost:5050");
-      setSocket(newSocket);
-  
-      // Gérer les événements socket
-      newSocket.on("connect", () => {
-        console.log(`Connecté avec l'ID : ${newSocket.id}`);
+
+  const sendMessage = () => {
+    if (message.trim() && socket) {
+      socket.emit('sendMessage', {
+        userId: socket.id, // Utiliser l'ID de l'utilisateur (ou un autre identifiant)
+        content: message,
       });
-  
-      newSocket.on("updateUsers", (data) => {
-        setUsers(data);
-      });
-  
-      // Nettoyer la connexion socket lorsque le composant est démonté
-      return () => {
-        newSocket.disconnect();
-      };
-    }, []); // Le tableau vide [] garantit que ce useEffect est exécuté une seule fois
-  
-    return (
-      <div>
-        <h1>Liste des utilisateurs connectés</h1>
-        <ul>
-          {users.map((user, index) => (
-            <li key={index}>{user.name}</li>
-          ))}
-        </ul>
-      </div>
-    );
-
-  /* const [count, setCount] = useState(0)
+      setMessage(''); // Réinitialiser le champ de saisie
+    }
+  };
 
   return (
-    <>
+    <div>
+      <h1>Liste des utilisateurs connectés</h1>
+      <ul>
+        {users.map((user, index) => (
+          <li key={index}>{user.name}</li>
+        ))}
+      </ul>
+
+      <h2>Messages</h2>
+      <ul>
+        {messagesHistory.map((msgH, indexH) => (
+          <li key={indexH}>
+            <strong>{msgH.userId}:</strong> {msgH.content}
+          </li>
+        ))}
+        {messages.map((msg, index) => (
+          <li key={index}>
+            <strong>{msg.userId}:</strong> {msg.content}
+          </li>
+        ))}
+      </ul>
+
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Tapez un message..."
+        />
+        <button onClick={sendMessage}>Envoyer</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  ) */
+    </div>
+  );
 }
 
-export default App
+export default App;
