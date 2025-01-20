@@ -1,5 +1,6 @@
 const Channel = require('../models/Channel');
 
+const channelsList = [];
 const channelManager = (socket, io) => {
   socket.on('createChannel', async (data) => {
     try {
@@ -20,17 +21,24 @@ const channelManager = (socket, io) => {
     }
   });
 
-  socket.on('joinChannel', (data) => {
+  socket.on('joinChannel', async (data) => {
     try {
-      socket.join(data.channelId);
-      io.to(data.channelId).emit('userJoined', { userId: socket.id, channelId: data.channelId });
+      if (!data.name) {
+        return socket.emit('error', { message: 'Le nom du canal est requis pour rejoindre un canal.' });
+      }
+  
+      socket.join(data.name);
+  
+      const joinedRooms = Array.from(socket.rooms);
+      console.log(`Salons rejoints par ${socket.id} :`, joinedRooms);
+      socket.emit('getJoinedRooms', joinedRooms);
     } catch (err) {
       console.error('Erreur join channel :', err);
+      socket.emit('error', { message: 'Erreur lors de la jonction du canal.', error: err.message });
     }
   });
 
-
-  socket.on('leaveChannel', (data) => {
+  socket.on('leaveChannel',async (data) => {
     try {
       socket.leave(data.channelId);
       io.to(data.channelId).emit('userLeft', { userId: socket.id, channelId: data.channelId });
@@ -39,12 +47,16 @@ const channelManager = (socket, io) => {
     }
   });
 
-  socket.on('listChannels', async () => {
+  socket.on('listChannels', async (data) => {
     try {
-      const channels = await Channel.find({});
-      socket.emit('channelList', channels);
+      const filter = data?.filter || '';
+      const regex = new RegExp(filter, 'i');
+      const channels = await Channel.find({ name: { $regex: regex } });
+      const formattedList = channels.map((channel) => `${channel.name}`).join(' ');
+      console.log(formattedList);
+      socket.emit('channelList', `/list ${formattedList}`);
     } catch (err) {
-      console.error('Erreur lists channels :', err);
+      console.error('Erreur lors de la récupération des channels :', err);
     }
   });
 
