@@ -29,7 +29,6 @@ mongoose.connect(mongoUri, {})
 
 setupSocketManager(io);
 
-
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
