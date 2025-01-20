@@ -8,7 +8,7 @@ function App() {
   const [messagesHistory, setHistoryMessage] = useState([]);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState(''); // Champ pour commandes ou messages
-  const [rooms, setRooms] = useState([]); // Liste des salons rejoints
+  const [channels, setChannels] = useState([]); // Liste des salons rejoints
  
   useEffect(() => {
     const newSocket = io('http://localhost:5050');
@@ -33,10 +33,11 @@ function App() {
     newSocket.on('messageHistory', (data) => {
       setHistoryMessage(data);
     });
- 
-    newSocket.on('updateRooms', (data) => {
-      setRooms(data); // Met à jour la liste des salons
-    });
+
+
+    newSocket.on('listChannels',(data) => {
+      setChannels(data);
+    })
  
     return () => {
       newSocket.disconnect();
@@ -53,13 +54,12 @@ function App() {
         socket.emit('createChannel', { name: channelName });
         console.log(`crée le canal : ${channelName}`);
       }
-    } else if (trimmedInput.startsWith('/join')) {
-      const channelName = trimmedInput.split(' ')[1]; // Extraire le nom du canal
-      if (channelName && socket) {
-        socket.emit('joinChannel', { name: channelName });
-        console.log(`Rejoint le canal : ${channelName}`);
-      }
-    } else {
+    } else if (trimmedInput.startsWith('/list')) {
+      const channelFilter = trimmedInput.split(' ')[1];
+      console.log(channelFilter);
+        socket.emit('getChannels', {filter: channelFilter});
+        console.log(`liste les canaux commençant par : ${channelFilter}`);
+      } else {
       // Par défaut, envoyer un message
       if (trimmedInput && socket) {
         socket.emit('sendMessage', {
@@ -83,7 +83,6 @@ function App() {
  
       <h2>Messages</h2>
       <ul>
-        {console.log(messagesHistory)}
         {messagesHistory.map((msgH, indexH) => (
           <li key={indexH}>
             <strong>{msgH.userId}:</strong> {msgH.content}
@@ -96,8 +95,14 @@ function App() {
         ))}
       </ul>
  
-      <h2>Salons rejoints</h2>
- 
+      <h2>ListChannels</h2>
+      <ul>
+        {channels.map((channel, index) => (
+          <li key={index}>
+            <strong>{channel.name}</strong> 
+          </li>
+        ))}
+      </ul>
       <div>
         <input
           type="text"
