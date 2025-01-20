@@ -11,6 +11,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState(''); // Champ pour commandes ou messages
   const [channels, setChannels] = useState([]); // Liste des salons rejoints
+  const [currentFail, setError] = useState('');
  
   useEffect(() => {
     const newSocket = io('http://localhost:5050');
@@ -40,6 +41,10 @@ function App() {
     newSocket.on('listChannels',(data) => {
       setChannels(data);
     })
+
+    newSocket.on('errors',(data) => {
+      setError(data);
+    })
  
     return () => {
       newSocket.disconnect();
@@ -58,14 +63,30 @@ function App() {
         console.log(`crée le canal : ${channelName}`);
       }
     } else if (trimmedInput.startsWith('/list')) {
+
       const channelFilter = trimmedInput.split(' ')[1];
         socket.emit('getChannels', {filter: channelFilter});
         console.log(`liste les canaux commençant par : ${channelFilter}`);
       } 
       else if (trimmedInput.startsWith('/join')) {
+
         const channelName = trimmedInput.split(' ')[1];
           socket.emit('joinChannel', {name: channelName});
           console.log(`join channel named: ${channelName}`);
+
+      } else if (trimmedInput.startsWith('/quit')) {
+
+        const channelName = trimmedInput.split(' ')[1];
+          socket.emit('leaveChannel', {name: channelName});
+          console.log(`leave channel named: ${channelName}`);
+
+      }
+      else if (trimmedInput.startsWith('/delete')) {
+
+        const channelName = trimmedInput.split(' ')[1];
+          socket.emit('deleteChannel', {name: channelName});
+          console.log(`delete channel named: ${channelName}`);
+
       } else {
       // Par défaut, envoyer un message
       if (trimmedInput && socket) {
@@ -111,6 +132,8 @@ function App() {
           </li>
         ))}
       </ul>
+      <h2>Errors</h2>
+      <p>{currentFail.error}</p>
       <div>
         <input
           type="text"
