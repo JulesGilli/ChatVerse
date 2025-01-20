@@ -14,6 +14,6 @@ const MessageSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-});
+}, {versionKey: false});
 
 module.exports = mongoose.model('messages', MessageSchema);

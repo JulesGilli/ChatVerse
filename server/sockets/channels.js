@@ -4,15 +4,14 @@ const Channel = require('../models/Channel');
 const channelManager = (socket, io) => {
   socket.on('createChannel', async (data) => {
     try {
-      console.log(await Channel.find({name : data.name}));
-      if (await Channel.find({name : data.name})!=[])
-      {
-        socket.emit('errors',{error: "Le channel existe déjà"});
-      }
-      else{
+      const exist = await Channel.findOne({name : data.name});
+      if (!exist){
         const newChannel = new Channel({ name: data.name });
         await newChannel.save();
         io.emit('newChannel', newChannel);
+      }
+      else{
+        socket.emit('errors',{error: "Erreur le channel existe déjà"});
       }
     } catch (err) {
       console.error('Erreur lors de la création du channel :', err);
@@ -37,13 +36,13 @@ const channelManager = (socket, io) => {
   })
 
   socket.on('joinChannel',async(data) => {
-    if (await Channel.find({name: data.name})){
+    const check = await Channel.findOne({name : data.name});
+    if (check){
       socket.join(data.name);
-      console.log("channel join");
+      console.log("channel join: " + data.name);
     }
     else{
       socket.emit('errors',{error: "Erreur le channel n'existe pas"});
-      console.log("channel not exist");
     }
   })
 

@@ -7,6 +7,6 @@ const ChannelSchema = new mongoose.Schema({
         required: true
     }
 
-});
+}, {versionKey: false});
 
 module.exports = mongoose.model('channels', ChannelSchema);
