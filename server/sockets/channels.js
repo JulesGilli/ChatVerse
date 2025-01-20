@@ -27,6 +27,14 @@ const channelManager = (socket, io) => {
     }
   })
 
+  socket.on('joinChannel',async(data) => {
+    if (data.name){
+      socket.join(data.name);
+      console.log("channel join");
+    }
+  })
+
+
 }
 module.exports = channelManager;
 

@@ -56,9 +56,13 @@ function App() {
       }
     } else if (trimmedInput.startsWith('/list')) {
       const channelFilter = trimmedInput.split(' ')[1];
-      console.log(channelFilter);
         socket.emit('getChannels', {filter: channelFilter});
         console.log(`liste les canaux commençant par : ${channelFilter}`);
+      } 
+      else if (trimmedInput.startsWith('/join')) {
+        const channelName = trimmedInput.split(' ')[1];
+          socket.emit('joinChannel', {name: channelName});
+          console.log(`join channel named: ${channelName}`);
       } else {
       // Par défaut, envoyer un message
       if (trimmedInput && socket) {
