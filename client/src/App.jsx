@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react'
-import { io } from 'socket.io-client'
-import reactLogo from './assets/react.svg'
-import viteLogo from '../public/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+import './App.css';
 
 function App() {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [messagesHistory, setHistoryMessage] = useState([]);
-  const [message, setMessage] = useState(''); // Contient le message que l'utilisateur tape
-  const [messages, setMessages] = useState([]); // Liste des messages reçus
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState(''); // Champ pour commandes ou messages
+  const [rooms, setRooms] = useState([]); // Liste des salons rejoints
 
   useEffect(() => {
     const newSocket = io('http://localhost:5050');
@@ -17,6 +16,8 @@ function App() {
 
     newSocket.on('connect', () => {
       console.log(`Connecté avec l'ID : ${newSocket.id}`);
+      // Demander les salons au serveur après connexion
+      newSocket.emit('getJoinedRooms');
     });
 
     newSocket.on('updateUsers', (data) => {
@@ -24,11 +25,15 @@ function App() {
     });
 
     newSocket.on('newMessage', (newMessage) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]); // Met à jour la liste des messages
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
     newSocket.on('messageHistory', (data) => {
       setHistoryMessage(data);
+    });
+
+    newSocket.on('updateRooms', (data) => {
+      setRooms(data); // Met à jour la liste des salons
     });
 
     return () => {
@@ -36,16 +41,34 @@ function App() {
     };
   }, []);
 
-  
+  const handleCommand = () => {
+    const trimmedInput = input.trim();
 
-  const sendMessage = () => {
-    if (message.trim() && socket) {
-      socket.emit('sendMessage', {
-        userId: socket.id, // Utiliser l'ID de l'utilisateur (ou un autre identifiant)
-        content: message,
-      });
-      setMessage(''); // Réinitialiser le champ de saisie
+    if (trimmedInput.startsWith('/create')) {
+      // Commande /join
+      const channelName = trimmedInput.split(' ')[1]; // Extraire le nom du canal
+      if (channelName && socket) {
+        socket.emit('createChannel', { name: channelName });
+        console.log(`crée le canal : ${channelName}`);
+      }
+    else if (trimmedInput.startsWith('/join')) {
+            const channelName = trimmedInput.split(' ')[1]; // Extraire le nom du canal
+      if (channelName && socket) {
+        socket.emit('joinChannel', { name: channelName });
+        console.log(`Rejoint le canal : ${channelName}`);
+      }
     }
+    } else {
+      // Par défaut, envoyer un message
+      if (trimmedInput && socket) {
+        socket.emit('sendMessage', {
+          userId: socket.id,
+          content: trimmedInput,
+        });
+      }
+    }
+
+    setInput(''); // Réinitialiser le champ
   };
 
   return (
@@ -71,14 +94,23 @@ function App() {
         ))}
       </ul>
 
+      <h2>Salons rejoints</h2>
+      <ul>
+        {rooms.map((room, index) => (
+          <li key={index}>{room}</li>
+        ))}
+      </ul>
+
       <div>
         <input
           type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Tapez un message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Tapez une commande ou un message..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleCommand();
+          }}
         />
-        <button onClick={sendMessage}>Envoyer</button>
       </div>
     </div>
   );
