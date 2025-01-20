@@ -119,6 +119,15 @@ function App() {
       setError(data.error || 'Unknown error');
     });
 
+    newSocket.on('userNicknameFetch', ({ userId, oldName, newNickname }) => {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, name: newNickname } : user
+        )
+      );
+      console.log(`${oldName} changed their nickname to ${newNickname}`);
+    });
+
     return () => {
       newSocket.disconnect();
     };
@@ -144,6 +153,10 @@ function App() {
     } else if (trimmedInput.startsWith('/delete')) {
       const channelName = trimmedInput.split(' ')[1];
       socket.emit('deleteChannel', { name: channelName });
+    } else if (trimmedInput.startsWith('/nick')) {
+      const nickName = trimmedInput.split(' ')[1];
+      console.log(nickName);
+      socket.emit('changeNickname', { name: nickName });
     } else {
       if (trimmedInput && socket) {
         socket.emit('sendMessage', {
