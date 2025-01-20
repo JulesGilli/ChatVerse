@@ -63,7 +63,7 @@ function App() {
       // Par défaut, envoyer un message
       if (trimmedInput && socket) {
         socket.emit('sendMessage', {
-          userId: socket.id,
+          userId: "user"+socket.id,
           content: trimmedInput,
         });
       }
