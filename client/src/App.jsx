@@ -51,13 +51,12 @@ function App() {
         socket.emit('createChannel', { name: channelName });
         console.log(`crée le canal : ${channelName}`);
       }
-    else if (trimmedInput.startsWith('/join')) {
-            const channelName = trimmedInput.split(' ')[1]; // Extraire le nom du canal
+    } else if (trimmedInput.startsWith('/join')) {
+      const channelName = trimmedInput.split(' ')[1]; // Extraire le nom du canal
       if (channelName && socket) {
         socket.emit('joinChannel', { name: channelName });
         console.log(`Rejoint le canal : ${channelName}`);
       }
-    }
     } else {
       // Par défaut, envoyer un message
       if (trimmedInput && socket) {
@@ -82,6 +81,7 @@ function App() {
 
       <h2>Messages</h2>
       <ul>
+        {console.log(messagesHistory)}
         {messagesHistory.map((msgH, indexH) => (
           <li key={indexH}>
             <strong>{msgH.userId}:</strong> {msgH.content}
