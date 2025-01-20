@@ -13,8 +13,13 @@ const channelManager = (socket, io) => {
 
   socket.on('getChannels', async (data) => {
     try {
-      const regexFilter = new RegExp(`^${data.filter}`, 'i') || '';
-      const channelList = await Channel.find({name:{ $regex: regexFilter}});
+      let channelList;
+      if(data.filter){
+        const regexFilter = new RegExp(`^${data.filter}`, 'i');
+        channelList = await Channel.find({name:{ $regex: regexFilter}});
+      }else{
+        channelList = await Channel.find({});
+      }
       console.log(channelList);
       socket.emit('listChannels', channelList);
     } catch (error) {
