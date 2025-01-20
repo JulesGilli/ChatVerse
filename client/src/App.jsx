@@ -83,6 +83,7 @@ function App() {
  
       <h2>Messages</h2>
       <ul>
+        {console.log(messagesHistory)}
         {messagesHistory.map((msgH, indexH) => (
           <li key={indexH}>
             <strong>{msgH.userId}:</strong> {msgH.content}
