@@ -3,6 +3,8 @@ import { io } from 'socket.io-client';
 import './App.css';
 import Sidebar from './components/Sidebar.jsx'
 import ChatWindow from './components/ChatWindow.jsx'
+import { createSocketConnection } from './socketService';
+import { handleCommand } from './inputManager.js';
 //import CommandInput from './components/CommandInput.jsx'
 
 function CommandInput({ onCommand }) {
@@ -38,47 +40,14 @@ function App() {
   const [currentFail, setError] = useState('');
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5050');
+    const newSocket = createSocketConnection(setCurrentUserId, setUsers, setMessages, setHistoryMessage, setChannels, setError);
     setSocket(newSocket);
-
-    newSocket.on('connect', () => {
-      setCurrentUserId(newSocket.id);
-      console.log(`Connected with ID: ${newSocket.id}`);
-    });
-
-    newSocket.on('updateUsers', (data) => {
-      setUsers(data);
-    });
-
-    newSocket.on('newMessage', (newMessage) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    });
-
-    newSocket.on('messageHistory', (data) => {
-      setHistoryMessage(data);
-    });
-
-    newSocket.on('listChannels', (data) => {
-      setChannels(data);
-    });
-
-    newSocket.on('errors', (data) => {
-      setError(data.error || 'Unknown error');
-    });
-
-    newSocket.on('userNicknameFetch', ({ userId, oldName, newNickname }) => {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, name: newNickname } : user
-        )
-      );
-      console.log(`${oldName} changed their nickname to ${newNickname}`);
-    });
 
     return () => {
       newSocket.disconnect();
     };
   }, []);
+
 
   const handleCommand = (input) => {
     const trimmedInput = input.trim();
