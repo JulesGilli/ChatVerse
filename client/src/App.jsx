@@ -2,39 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import './App.css';
 import Sidebar from './components/Sidebar.jsx'
+import ChatWindow from './components/ChatWindow.jsx'
+//import CommandInput from './components/CommandInput.jsx'
 
-
-// Composant ChatWindow
-function ChatWindow({ messages, messageHistory, currentUserId }) {
-  return (
-    <div className="chat-window">
-      <div className="messages">
-        {messageHistory.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${
-              msg.userId === currentUserId ? 'sent' : 'received'
-            }`}
-          >
-            <strong>{msg.userId}:</strong> {msg.content}
-          </div>
-        ))}
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${
-              msg.userId === currentUserId ? 'sent' : 'received'
-            }`}
-          >
-            <strong>{msg.userId}:</strong> {msg.content}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Composant CommandInput
 function CommandInput({ onCommand }) {
   const [input, setInput] = useState('');
 
@@ -58,7 +28,6 @@ function CommandInput({ onCommand }) {
   );
 }
 
-// Composant principal App
 function App() {
   const [socket, setSocket] = useState(null);
   const [currentUserId, setCurrentUserId] = useState('');

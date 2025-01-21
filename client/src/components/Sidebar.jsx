@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 function Sidebar({ users, channels, onCommand, currentFail }) {
   return (
     <div className="sidebar">
+      <h1>Sidebar Loaded</h1>
+      <p>Static content for testing</p>
       <h1>Users</h1>
       <ul>
         {users.map((user, index) => (
