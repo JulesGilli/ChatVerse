@@ -69,6 +69,86 @@ body {
   background: #777;
 }
 
+.sidebar button {
+  margin: 5px 0;
+  padding: 10px;
+  width: 100%;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar button:hover {
+  background-color: #555;
+}
+
+.input-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.input-container {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 300px;
+}
+
+.input-container h3 {
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #333;
+  color: #fff;
+}
+
+.input-container button {
+  margin: 5px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.input-container button:first-child {
+  background-color: #4caf50;
+  color: white;
+}
+
+.input-container button:first-child:hover {
+  background-color: #45a049;
+}
+
+.input-container button:last-child {
+  background-color: #c2362c;
+  color: white;
+}
+
+.input-container button:last-child:hover {
+  background-color: #b12c2a;
+}
+
+
 
 .main-content {
   flex: 1;
