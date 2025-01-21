@@ -29,15 +29,6 @@ const createSocketConnection = (setCurrentUserId, setUsers, setMessages, setHist
     setError(data.error || 'Unknown error');
   });
 
-  newSocket.on('userNicknameFetch', ({ userId, oldName, newNickname }) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? { ...user, name: newNickname } : user
-      )
-    );
-    console.log(`${oldName} changed their nickname to ${newNickname}`);
-  });
-
   return newSocket;
 };
 
