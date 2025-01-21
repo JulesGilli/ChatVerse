@@ -6,22 +6,42 @@ import ChatWindow from './components/ChatWindow.jsx';
 import { createSocketConnection } from './socketService';
 import { handleCommand } from './inputManager'; // Importing the new command handler
 
-function CommandInput({ onCommand }) {
-  const [input, setInput] = useState('');
+const COMMANDS = [
+  '/create',
+  '/list',
+  '/join',
+  '/quit',
+  '/delete',
+  '/nick',
+];
 
+function CommandInput({ onCommand, suggestions, onInputChange, input }) {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       onCommand(input);
-      setInput('');
     }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    onInputChange(suggestion);
   };
 
   return (
     <div className="command-input">
+      {suggestions.length > 0 && (
+        <ul className="suggestions">
+          {suggestions.map((suggestion, index) => (
+            <li key={index} onClick={() => handleSuggestionClick(suggestion)}>
+              {suggestion}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <input
         type="text"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => onInputChange(e.target.value)}
         placeholder="Type a command or message..."
         onKeyDown={handleKeyPress}
       />
@@ -37,9 +57,18 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [channels, setChannels] = useState([]);
   const [currentFail, setError] = useState('');
+  const [input, setInput] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
-    const newSocket = createSocketConnection(setCurrentUserId, setUsers, setMessages, setHistoryMessage, setChannels, setError);
+    const newSocket = createSocketConnection(
+      setCurrentUserId,
+      setUsers,
+      setMessages,
+      setHistoryMessage,
+      setChannels,
+      setError
+    );
     setSocket(newSocket);
 
     return () => {
@@ -49,6 +78,21 @@ function App() {
 
   const handleUserCommand = (input) => {
     handleCommand(input, socket, currentUserId); // Use the command handler
+    setInput(''); 
+    setSuggestions([]); 
+  };
+
+  const handleInputChange = (value) => {
+    setInput(value);
+
+    if (value.startsWith('/')) {
+      const filteredSuggestions = COMMANDS.filter((cmd) =>
+        cmd.startsWith(value)
+      );
+      setSuggestions(filteredSuggestions);
+    } else {
+      setSuggestions([]);
+    }
   };
 
   return (
@@ -65,7 +109,12 @@ function App() {
           messageHistory={messagesHistory}
           currentUserId={`user${currentUserId}`}
         />
-        <CommandInput onCommand={handleUserCommand} />
+        <CommandInput
+          onCommand={handleUserCommand}
+          suggestions={suggestions}
+          onInputChange={handleInputChange}
+          input={input} 
+        />
       </div>
     </div>
   );
