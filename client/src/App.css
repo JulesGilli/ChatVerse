@@ -21,6 +21,9 @@ body {
   flex-direction: column;
   padding: 20px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar h1 {
@@ -48,6 +51,24 @@ body {
 .sidebar li:hover {
   background-color: #555;
 }
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
 
 .main-content {
   flex: 1;
@@ -77,16 +98,16 @@ body {
   padding: 15px;
   border-radius: 10px;
   font-size: 0.9em;
-  align-self: flex-start; /* Alignement par défaut à gauche */
+  align-self: flex-start; 
 }
 
 .message.sent {
-  align-self: flex-end; /* Messages de l'utilisateur alignés à droite */
-  background-color: #333; /* Couleur spécifique */
+  align-self: flex-end;
+  background-color: #333; 
 }
 
 .message.received {
-  background-color: #444; /* Couleur différente pour les messages reçus */
+  background-color: #444;
 }
 
 
@@ -144,5 +165,11 @@ body {
 
   .message {
     max-width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 50%;
   }
 }
