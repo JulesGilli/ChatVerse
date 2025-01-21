@@ -113,6 +113,7 @@ body {
 
 .command-input {
   display: flex;
+  position: relative;
   padding: 20px;
   background-color: #1e1e1e;
   border-top: 1px solid #333;
@@ -146,13 +147,13 @@ body {
 
 .suggestions {
   position: absolute;
-  top: -60px;
+  bottom: 100%;
   left: 0;
   width: 100%;
   background-color: #1e1e1e;
   color: #ffffff;
   border: 1px solid #333;
-  border-radius: 5px;
+  border-radius: 5px 5px 0 0;
   list-style: none;
   padding: 5px;
   margin: 0;
