@@ -1,4 +1,3 @@
-
 export const handleCommand = (input, socket, currentUserId, setError) => {
     const trimmedInput = input.trim();
   
