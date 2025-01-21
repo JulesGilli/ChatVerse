@@ -15,32 +15,19 @@ const connectionManager = async (socket, io) => {
 
   socket.on('changeNickname', (data) => {
     newNickname = data.name;
-/*     if (!newNickname.name || newNickname.name.trim() === '') {
-      socket.emit('error', 'Le pseudonyme ne peut pas être vide.');
-
-    }else{ */
-      console.log(newNickname);
-      const user = connectedUsers.find((user) => user.id === socket.id);
-      if (user) {
-        const oldName = user.name;
-        user.name = newNickname;
-  
-        console.log(`${oldName} a changé son nickname ${newNickname}`);
-  
-        io.emit('userNicknameFetch', {
-          userId: socket.id,
-          oldName,
-          newNickname,
-        });
-  
-        io.emit('updateUsers', connectedUsers);
-      }
+    const user = connectedUsers.find((user) => user.id === socket.id);
+    if (user){
+      user.name = newNickname;
     }
-  );
+    io.emit('updateUsers', connectedUsers);
+  }
+);
   
   socket.on('disconnect', () => {
+    console.log(connectedUsers);
     console.log(`${userName} s'est déconnecté`);
-    connectedUsers = connectedUsers.filter((user) => user.name !== userName);
+    connectedUsers = connectedUsers.filter((user) => user.id !== socket.id);
+    console.log(connectedUsers);
     io.emit('updateUsers', connectedUsers);
   });
 };
