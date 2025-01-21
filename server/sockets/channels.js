@@ -124,6 +124,13 @@ const channelManager = async (socket, io) => {
     console.log("azerty");
   })
 
+  socket.on('deleteChannel',async(data) => {
+    const check = await Channel.findOne({name : data.name});
+    if (check){
+      await Channel.deleteOne({name : data.name});
+      io.in(data.name).socketsLeave(data.name);
+    }
+  })
 }
 module.exports = channelManager;
 

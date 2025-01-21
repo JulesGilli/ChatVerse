@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import './App.css';
-import Sidebar from './components/Sidebar.jsx'
-import ChatWindow from './components/ChatWindow.jsx'
-//import CommandInput from './components/CommandInput.jsx'
+import Sidebar from './components/Sidebar.jsx';
+import ChatWindow from './components/ChatWindow.jsx';
+import { createSocketConnection } from './socketService';
+import { handleCommand } from './inputManager'; // Importing the new command handler
 
 function CommandInput({ onCommand }) {
   const [input, setInput] = useState('');
@@ -39,86 +40,16 @@ function App() {
   const [currentFail, setError] = useState('');
  
   useEffect(() => {
-    const newSocket = io('http://localhost:5050');
+    const newSocket = createSocketConnection(setCurrentUserId, setUsers, setMessages, setHistoryMessage, setChannels, setError);
     setSocket(newSocket);
- 
-    newSocket.on('connect', () => {
-      setCurrentUserId(newSocket.id);
-      console.log(`Connected with ID: ${newSocket.id}`);
-    });
 
-    newSocket.on("currentChannel", (data) => {
-      setCurrentChannel(data);
-      io.to(data.nameChannel).emit("updateUsers", data.users);
-    });
- 
-    newSocket.on('updateUsers', (data) => {
-      setUsers(data);
-      console.log(data);
-    });
- 
-    newSocket.on('newMessage', (newMessage) => {
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    });
- 
-    newSocket.on('messageHistory', (data) => {
-      setHistoryMessage(data);
-    });
- 
-    newSocket.on('listChannels', (data) => {
-      setChannels(data);
-    });
- 
-    newSocket.on('errors', (data) => {
-      setError(data.error || 'Unknown error');
-    });
- 
-    newSocket.on('userNicknameFetch', ({ userId, oldName, newNickname }) => {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, name: newNickname } : user
-        )
-      );
-      console.log(`${oldName} changed their nickname to ${newNickname}`);
-    });
- 
     return () => {
       newSocket.disconnect();
     };
   }, []);
- 
-  const handleCommand = (input) => {
-    const trimmedInput = input.trim();
- 
-    if (trimmedInput.startsWith('/create')) {
-      const channelName = trimmedInput.split(' ')[1];
-      if (channelName && socket) {
-        socket.emit('createChannel', { name: channelName });
-      }
-    } else if (trimmedInput.startsWith('/list')) {
-      const channelFilter = trimmedInput.split(' ')[1];
-      socket.emit('getChannels', { filter: channelFilter });
-    } else if (trimmedInput.startsWith('/join')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('joinChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/quit')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('leaveChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/delete')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('deleteChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/nick')) {
-      const nickName = trimmedInput.split(' ')[1];
-      console.log(nickName);
-      socket.emit('changeNickname', { name: nickName });
-    } else {
-      if (trimmedInput && socket) {
-        socket.emit('sendMessage', {
-          userId: `user${currentUserId}`,
-          content: trimmedInput,
-        });
-      }
-    }
+
+  const handleUserCommand = (input) => {
+    handleCommand(input, socket, currentUserId); // Use the command handler
   };
  
   return (
@@ -126,7 +57,7 @@ function App() {
       <Sidebar
         users={users}
         channels={channels}
-        onCommand={handleCommand}
+        onCommand={handleUserCommand}
         currentFail={currentFail}
       />
       <div className="main-content">
@@ -135,7 +66,7 @@ function App() {
           messageHistory={messagesHistory}
           currentUserId={`user${currentUserId}`}
         />
-        <CommandInput onCommand={handleCommand} />
+        <CommandInput onCommand={handleUserCommand} />
       </div>
     </div>
   );
