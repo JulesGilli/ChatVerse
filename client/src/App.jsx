@@ -1,30 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import './App.css';
+import Sidebar from './components/Sidebar.jsx'
 
-// Composant Sidebar
-function Sidebar({ users, channels, onCommand, currentFail }) {
-  return (
-    <div className="sidebar">
-      <h1>Users</h1>
-      <ul>
-        {users.map((user, index) => (
-          <li key={index}>{user.name}</li>
-        ))}
-      </ul>
-      <h1>Channels</h1>
-      <ul>
-        {channels.map((channel, index) => (
-          <li key={index} onClick={() => onCommand(`/join ${channel.name}`)}>
-            {channel.name}
-          </li>
-        ))}
-      </ul>
-      <h2>Errors</h2>
-      <p>{currentFail}</p>
-    </div>
-  );
-}
 
 // Composant ChatWindow
 function ChatWindow({ messages, messageHistory, currentUserId }) {
