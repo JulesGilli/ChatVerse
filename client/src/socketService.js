@@ -10,6 +10,7 @@ const createSocketConnection = (setCurrentUserId, setUsers, setMessages, setHist
   });
 
   newSocket.on('updateUsers', (data) => {
+    console.log(data);
     setUsers(data);
   });
 
