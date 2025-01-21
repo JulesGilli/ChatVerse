@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import './App.css';
-import Sidebar from './components/Sidebar.jsx'
-import ChatWindow from './components/ChatWindow.jsx'
+import Sidebar from './components/Sidebar.jsx';
+import ChatWindow from './components/ChatWindow.jsx';
 import { createSocketConnection } from './socketService';
-import { handleCommand } from './inputManager.js';
-//import CommandInput from './components/CommandInput.jsx'
+import { handleCommand } from './inputManager'; // Importing the new command handler
 
 function CommandInput({ onCommand }) {
   const [input, setInput] = useState('');
@@ -48,39 +47,8 @@ function App() {
     };
   }, []);
 
-
-  const handleCommand = (input) => {
-    const trimmedInput = input.trim();
-
-    if (trimmedInput.startsWith('/create')) {
-      const channelName = trimmedInput.split(' ')[1];
-      if (channelName && socket) {
-        socket.emit('createChannel', { name: channelName });
-      }
-    } else if (trimmedInput.startsWith('/list')) {
-      const channelFilter = trimmedInput.split(' ')[1];
-      socket.emit('getChannels', { filter: channelFilter });
-    } else if (trimmedInput.startsWith('/join')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('joinChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/quit')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('leaveChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/delete')) {
-      const channelName = trimmedInput.split(' ')[1];
-      socket.emit('deleteChannel', { name: channelName });
-    } else if (trimmedInput.startsWith('/nick')) {
-      const nickName = trimmedInput.split(' ')[1];
-      console.log(nickName);
-      socket.emit('changeNickname', { name: nickName });
-    } else {
-      if (trimmedInput && socket) {
-        socket.emit('sendMessage', {
-          userId: `user${currentUserId}`,
-          content: trimmedInput,
-        });
-      }
-    }
+  const handleUserCommand = (input) => {
+    handleCommand(input, socket, currentUserId); // Use the command handler
   };
 
   return (
@@ -88,7 +56,7 @@ function App() {
       <Sidebar
         users={users}
         channels={channels}
-        onCommand={handleCommand}
+        onCommand={handleUserCommand}
         currentFail={currentFail}
       />
       <div className="main-content">
@@ -97,7 +65,7 @@ function App() {
           messageHistory={messagesHistory}
           currentUserId={`user${currentUserId}`}
         />
-        <CommandInput onCommand={handleCommand} />
+        <CommandInput onCommand={handleUserCommand} />
       </div>
     </div>
   );
