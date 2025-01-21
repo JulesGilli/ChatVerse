@@ -7,14 +7,14 @@ import ChatWindow from './components/ChatWindow.jsx'
 
 function CommandInput({ onCommand }) {
   const [input, setInput] = useState('');
-
+ 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       onCommand(input);
       setInput('');
     }
   };
-
+ 
   return (
     <div className="command-input">
       <input
@@ -35,37 +35,44 @@ function App() {
   const [messagesHistory, setHistoryMessage] = useState([]);
   const [messages, setMessages] = useState([]);
   const [channels, setChannels] = useState([]);
+  const [currentChannel, setCurrentChannel] = useState(null);
   const [currentFail, setError] = useState('');
-
+ 
   useEffect(() => {
     const newSocket = io('http://localhost:5050');
     setSocket(newSocket);
-
+ 
     newSocket.on('connect', () => {
       setCurrentUserId(newSocket.id);
       console.log(`Connected with ID: ${newSocket.id}`);
     });
 
+    newSocket.on("currentChannel", (data) => {
+      setCurrentChannel(data);
+      io.to(data.nameChannel).emit("updateUsers", data.users);
+    });
+ 
     newSocket.on('updateUsers', (data) => {
       setUsers(data);
+      console.log(data);
     });
-
+ 
     newSocket.on('newMessage', (newMessage) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
-
+ 
     newSocket.on('messageHistory', (data) => {
       setHistoryMessage(data);
     });
-
+ 
     newSocket.on('listChannels', (data) => {
       setChannels(data);
     });
-
+ 
     newSocket.on('errors', (data) => {
       setError(data.error || 'Unknown error');
     });
-
+ 
     newSocket.on('userNicknameFetch', ({ userId, oldName, newNickname }) => {
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
@@ -74,15 +81,15 @@ function App() {
       );
       console.log(`${oldName} changed their nickname to ${newNickname}`);
     });
-
+ 
     return () => {
       newSocket.disconnect();
     };
   }, []);
-
+ 
   const handleCommand = (input) => {
     const trimmedInput = input.trim();
-
+ 
     if (trimmedInput.startsWith('/create')) {
       const channelName = trimmedInput.split(' ')[1];
       if (channelName && socket) {
@@ -113,7 +120,7 @@ function App() {
       }
     }
   };
-
+ 
   return (
     <div className="app-container">
       <Sidebar
@@ -133,5 +140,5 @@ function App() {
     </div>
   );
 }
-
+ 
 export default App;
