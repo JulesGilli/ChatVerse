@@ -28,7 +28,6 @@ const connectionManager = async (socket, io) => {
     console.log(`${userName} s'est déconnecté`);
     connectedUsers = connectedUsers.filter((user) => user.id !== socket.id);
     console.log(connectedUsers);
-
     io.emit('updateUsers', connectedUsers);
   });
 };
