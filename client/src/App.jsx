@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import './App.css';
 import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
+import ChannelListWindow from './components/ChannelListWindow.jsx';
 import { createSocketConnection } from './socketService';
 import { handleCommand } from './inputManager'; // Importing the new command handler
 
@@ -59,6 +60,7 @@ function App() {
   const [currentFail, setError] = useState('');
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [showChannelList, setShowChannelList] = useState(false);
 
   useEffect(() => {
     const newSocket = createSocketConnection(
@@ -66,7 +68,10 @@ function App() {
       setUsers,
       setMessages,
       setHistoryMessage,
-      setChannels,
+      (channelData) => {
+        setChannels(channelData);
+        setShowChannelList(true); 
+      },
       setError
     );
     setSocket(newSocket);
@@ -77,9 +82,9 @@ function App() {
   }, []);
 
   const handleUserCommand = (input) => {
-    handleCommand(input, socket, currentUserId); // Use the command handler
-    setInput(''); 
-    setSuggestions([]); 
+    handleCommand(input, socket, currentUserId, setShowChannelList);
+    setInput('');
+    setSuggestions([]);
   };
 
   const handleInputChange = (value) => {
@@ -104,21 +109,30 @@ function App() {
         currentFail={currentFail}
       />
       <div className="main-content">
-        <ChatWindow
-          messages={messages}
-          messageHistory={messagesHistory}
-          currentUserId={currentUserId}
-          users={users}
-        />
-        <CommandInput
-          onCommand={handleUserCommand}
-          suggestions={suggestions}
-          onInputChange={handleInputChange}
-          input={input} 
-        />
+        {showChannelList ? (
+          <ChannelListWindow
+            channels={channels}
+            onClose={() => setShowChannelList(false)}
+          />
+        ) : (
+          <>
+            <ChatWindow
+              messages={messages}
+              messageHistory={messagesHistory}
+              currentUserId={currentUserId}
+              users={users}
+            />
+            <CommandInput
+              onCommand={handleUserCommand}
+              suggestions={suggestions}
+              onInputChange={handleInputChange}
+              input={input} 
+            />
+          </>
+        )}
       </div>
     </div>
   );
 }
-
+  
 export default App;

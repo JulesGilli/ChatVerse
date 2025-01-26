@@ -88,6 +88,76 @@ body {
   background-color: #555;
 }
 
+.channel-list-window {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: #121212;
+  padding: 20px;
+}
+
+.channel-list-window .header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.channel-list-window .header h2 {
+  font-size: 1.8em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.channel-list-window .close-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #444;
+  color: #fff;
+  font-size: 1.5em;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.channel-list-window .close-button:hover {
+  background: #555;
+}
+
+.channel-list-window .channel-list {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.channel-list-window .channel-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.channel-list-window .channel-item:hover {
+  background: #333;
+  transform: scale(1.05);
+}
+
+
 .input-overlay {
   position: fixed;
   top: 0;
