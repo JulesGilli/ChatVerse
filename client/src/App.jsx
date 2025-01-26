@@ -107,7 +107,8 @@ function App() {
         <ChatWindow
           messages={messages}
           messageHistory={messagesHistory}
-          currentUserId={`user${currentUserId}`}
+          currentUserId={currentUserId}
+          users={users}
         />
         <CommandInput
           onCommand={handleUserCommand}
