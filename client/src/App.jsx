@@ -3,6 +3,7 @@ import './App.css';
 import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import ChannelListWindow from './components/ChannelListWindow.jsx';
+import UserListWindow from './components/UserListWindow.jsx';
 import CommandInput from './components/CommandInput.jsx';
 import { createSocketConnection } from './socketService';
 
@@ -19,6 +20,9 @@ function App() {
   const [joinedChannels, setJoinedChannels] = useState([]);
   const [selectedChannel, setSelectedChannel] = useState(null);
 
+  const [channelUsers, setChannelUsers] = useState([]);
+  const [showUserList, setShowUserList] = useState(false); 
+
   useEffect(() => {
     const newSocket = createSocketConnection(
       setCurrentUserId,  
@@ -30,6 +34,11 @@ function App() {
       },
       setError            
     );
+
+    newSocket.on('usersInChannel', (users) => {
+      setChannelUsers(users);
+      setShowUserList(true);
+    });
 
     setSocket(newSocket);
 
@@ -95,6 +104,15 @@ function App() {
               setSelectedChannel(null);
             }
           }
+          break;
+
+        case '/users':
+          const channelToList = arg || selectedChannel;
+          if (!channelToList) {
+            console.error("Aucun canal spécifié ni sélectionné pour /users.");
+            break;
+          }
+          socket.emit('listUsersInChannel', { name: channelToList });
           break;
 
         case '/delete':
@@ -186,6 +204,11 @@ function App() {
           <ChannelListWindow
             channels={channels}
             onClose={() => setShowChannelList(false)}
+          />
+        ) : showUserList ? ( 
+          <UserListWindow
+            users={channelUsers}
+            onClose={() => setShowUserList(false)}
           />
         ) : (
           <>
