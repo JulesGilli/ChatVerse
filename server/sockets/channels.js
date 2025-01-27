@@ -7,7 +7,7 @@ function udpateListChannel(nameChannel, socket, io){
   for(var i = 0; i < listUsersConnectChannel.length; i++){
     if(listUsersConnectChannel[i].nameChannel == nameChannel){
       let users = listUsersConnectChannel[i].users;
-      users.push("user"+socket.id);
+      users.push({name: socket.data.userName});
       listUsersConnectChannel[i].users = users;
       currentChannel = listUsersConnectChannel[i];
       io.to(nameChannel).emit("updateUsers", users);
@@ -19,20 +19,28 @@ function verifUserOnListChannel(user, channel){
   for(var i=0; i<listUsersConnectChannel.length; i++){
     if(listUsersConnectChannel[i].nameChannel == channel){
       let users = listUsersConnectChannel[i].users;
-      return users.includes(user);
+      for(let k=0; k<users.length; k++){
+        if(users[k].name == user.name){
+          return true;
+        }else{
+          return false;
+        }
+      }
     }
   }
 }
 
 function leaveUserListForChannel(channel, socket, io){
-  let user = "user"+socket.id;
+  let user = {name: socket.data.userName};
   for(var i=0; i<listUsersConnectChannel.length; i++){
     if(listUsersConnectChannel[i].nameChannel == channel){
       let users = listUsersConnectChannel[i].users;
-      if(users.includes(user)){
-        listUsersConnectChannel[i].users = users.filter((aUser) => aUser != user);
-        socket.emit("updateUsers", []);
-        io.to(channel).emit("updateUsers", listUsersConnectChannel[i].users);
+      for(let k=0; k<users.length; k++){
+        if(users[k].name == user.name){
+          listUsersConnectChannel[i].users = users.filter((aUser) => aUser.name != user.name);
+          socket.emit("updateUsers", []);
+          io.to(channel).emit("updateUsers", listUsersConnectChannel[i].users);
+        }
       }
     }
   }
@@ -92,7 +100,7 @@ const channelManager = async (socket, io) => {
   socket.on('joinChannel',async(data) => {
     const check = await Channel.findOne({name : data.name});
     if (check){
-      if(!verifUserOnListChannel("user"+socket.id, data.name)){
+      if(!verifUserOnListChannel({name: socket.data.userName}, data.name)){
         socket.join(data.name);
         console.log("channel join: " + data.name);
         udpateListChannel(data.name, socket, io);
