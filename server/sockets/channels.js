@@ -121,7 +121,6 @@ const channelManager = async (socket, io) => {
     for(var i = 0; i < listUsersConnectChannel.length; i++){
       leaveUserListForChannel(listUsersConnectChannel[i].nameChannel, socket, io);
     }
-    console.log("azerty");
   })
 
   socket.on('deleteChannel',async(data) => {
