@@ -155,6 +155,11 @@ body {
   transform: scale(1.05);
 }
 
+.selected-channel {
+  border: 2px solid white;
+  background-color: #555; 
+  border-radius: 5px;    
+}
 
 .input-overlay {
   position: fixed;
