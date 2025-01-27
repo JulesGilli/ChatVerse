@@ -6,20 +6,18 @@ let connectedUsers = [];
 const connectionManager = async (socket, io) => {
   let userName = `user${socket.id}`;
   console.log(`${userName} s'est connecté`);
+  socket.data.userName = userName;
   connectedUsers.push({ name: userName });
  
   const messageHistory = await Message.find({});
   socket.emit('messageHistory', messageHistory);
  
-  socket.on('changeNickname', (data) => {
+  socket.on('changeNickname', async (data) => {
     const newNickname = data.name;
     const user = connectedUsers.find((user) => user.name === userName);
     if (user) {
       let lastName = user.name;
-      user.name = newNickname;
-      userName = newNickname;
-      io.emit('updateUsers', connectedUsers);
-      socket.emit('updateUsername', userName, lastName);
+      socket.data.userName = newNickname;
     }
   });
 
