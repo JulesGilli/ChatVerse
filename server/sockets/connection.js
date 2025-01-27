@@ -15,13 +15,13 @@ const connectionManager = async (socket, io, connectedUsers) => {
   socket.on('changeNickname', (data) => {
     const newNickname = data.name.trim();
     if (!newNickname) {
-      socket.emit('errors', { error: "Pseudo vide non autorisé" });
+      socket.emit('errors', { code: 400, error: "Invalid nickname: Nickname cannot be empty." });
       return;
     }
 
     const conflict = connectedUsers.find((u) => u.name === newNickname);
     if (conflict) {
-      socket.emit('errors', { error: "Ce pseudo est déjà utilisé." });
+      socket.emit('errors', { code: 409, error: "Conflict: Nickname already in use." });
       return;
     }
 

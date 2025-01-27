@@ -23,7 +23,7 @@ const messageManager = (socket, io, connectedUsers) => {
     const { to, content } = data;
     const userDest = connectedUsers.find(u => u.name === to);
     if (!userDest) {
-      socket.emit('errors', { error: "Utilisateur introuvable" });
+      socket.emit('errors', { code: 404, error: "Not Found: User not found." });
       return;
     }
     const sender = connectedUsers.find(u => u.id === socket.id);

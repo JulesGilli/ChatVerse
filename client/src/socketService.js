@@ -31,11 +31,13 @@ export function createSocketConnection(
 
   newSocket.on('errors', (data) => {
     const errorMessage = data.error || 'Unknown error';
-    setError(errorMessage);
+    const errorCode = data.code ? ` (Code: ${data.code})` : '';
+    setError(`${errorMessage}${errorCode}`);
     if (addNotification) {
-      addNotification(`Error: ${errorMessage}`);
+      addNotification(`Error${errorCode}: ${errorMessage}`); 
     }
   });
+  
 
   newSocket.on('usersInChannel', (users) => {
     console.log('Utilisateurs dans ce canal :', users);

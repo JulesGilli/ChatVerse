@@ -74,11 +74,11 @@ const channelManager = async (socket, io, connectedUsers) => {
         });
         io.emit('newChannel', newChannel);
       } else {
-        socket.emit('errors', { error: "Erreur : le channel existe déjà" });
+        socket.emit('errors', { code: 409, error: "Conflict: Channel already exists." });
       }
     } catch (err) {
-      console.error('Erreur lors de la création du channel :', err);
-      socket.emit('errors', { error: "Erreur lors de la création du channel" });
+      console.error('Error creating channel:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to create channel." });
     }
   });
 
@@ -91,10 +91,11 @@ const channelManager = async (socket, io, connectedUsers) => {
       } else {
         channelList = await Channel.find({});
       }
-      console.log("Liste de channels trouvés :", channelList);
+      console.log("Channels found:", channelList);
       socket.emit('listChannels', channelList);
     } catch (err) {
-      console.error('Erreur lors de la récupération des channels :', err);
+      console.error('Error retrieving channels:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to retrieve channels." });
     }
   });
 
@@ -102,9 +103,9 @@ const channelManager = async (socket, io, connectedUsers) => {
     const channelName = data.name;
     const check = await Channel.findOne({ name: channelName });
     if (!check) {
-      socket.emit('errors', { error: "Erreur : le channel n'existe pas" });
+      socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
       return;
-    } else {
+    } 
 
       const user = connectedUsers.find((u) => u.id === socket.id);
       const username = user ? user.name : `user${socket.id}`;
@@ -113,9 +114,8 @@ const channelManager = async (socket, io, connectedUsers) => {
         socket.join(channelName);
         updateListChannel(channelName, socket, io, connectedUsers);
       } else {
-        socket.emit('errors', { error: "Erreur : vous avez déjà rejoint ce channel" });
+        socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
       }
-    }
   });
 
   socket.on('leaveChannel', async (data) => {
@@ -127,14 +127,22 @@ const channelManager = async (socket, io, connectedUsers) => {
   });
 
   socket.on('deleteChannel', async (data) => {
-    const check = await Channel.findOne({ name: data.name });
-    if (check) {
-      await Channel.deleteOne({ name: data.name });
-      io.in(data.name).socketsLeave(data.name);
+    try {
+      const check = await Channel.findOne({ name: data.name });
+      if (check) {
+        await Channel.deleteOne({ name: data.name });
+        io.in(data.name).socketsLeave(data.name);
 
-      listUsersConnectChannel = listUsersConnectChannel.filter(
-        (obj) => obj.nameChannel !== data.name
-      );
+        listUsersConnectChannel = listUsersConnectChannel.filter(
+          (obj) => obj.nameChannel !== data.name
+        );
+        socket.emit('errors', { code: 200, error: `Success: Channel "${data.name}" deleted.` });
+      } else {
+        socket.emit('errors', { code: 404, error: "Not found: Channel does not exist." });
+      }
+    } catch (err) {
+      console.error('Error deleting channel:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to delete channel." });
     }
   });
 
@@ -145,7 +153,7 @@ const channelManager = async (socket, io, connectedUsers) => {
     );
 
     if (!channelObject) {
-      socket.emit("errors", { error: "Ce canal n'existe pas." });
+      socket.emit("errors", { code: 404, error: "Not found: Channel does not exist." });
       return;
     }
 

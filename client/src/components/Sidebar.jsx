@@ -47,9 +47,6 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       <button onClick={() => handleButtonClick('create')}>Create Channel</button>
       <button onClick={() => handleButtonClick('delete')}>Delete Channel</button>
 
-      <h2>Errors</h2>
-      <p>{currentFail}</p>
-
       {showInput && (
         <div className="input-overlay">
           <div className="input-container">
