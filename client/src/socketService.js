@@ -1,36 +1,43 @@
-// src/socketService.js
 import { io } from 'socket.io-client';
 
-const createSocketConnection = (setCurrentUserId, setUsers, setMessages, setHistoryMessage, setChannels, setError) => {
+export function createSocketConnection(
+  setCurrentUserId,
+  setUsers,
+  handleNewMessageCallback,
+  onListChannels,  
+  setError        
+) {
   const newSocket = io('http://localhost:5050');
-
+  
   newSocket.on('connect', () => {
     setCurrentUserId(newSocket.id);
     console.log(`Connected with ID: ${newSocket.id}`);
   });
 
   newSocket.on('updateUsers', (data) => {
-    console.log(data);
     setUsers(data);
   });
 
   newSocket.on('newMessage', (newMessage) => {
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-  });
-
-  newSocket.on('messageHistory', (data) => {
-    setHistoryMessage(data);
+    handleNewMessageCallback(newMessage);
   });
 
   newSocket.on('listChannels', (data) => {
-    setChannels(data);
+    if (onListChannels) {
+      onListChannels(data);
+    }
   });
 
   newSocket.on('errors', (data) => {
     setError(data.error || 'Unknown error');
   });
 
-  return newSocket;
-};
+  newSocket.on('usersInChannel', (users) => {
+    console.log('Utilisateurs dans ce canal :', users);
+  });
+  newSocket.on('privateMessage', (data) => {
+    console.log('Message privé reçu de :', data.from, ':', data.content);
+  });
 
-export { createSocketConnection };
+  return newSocket;
+}
