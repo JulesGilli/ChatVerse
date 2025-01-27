@@ -10,6 +10,12 @@ const MessageSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+
+    channel: {
+        type: String,
+        default:"general",
+    },
+
     createAt: {
         type: Date,
         default: Date.now,
