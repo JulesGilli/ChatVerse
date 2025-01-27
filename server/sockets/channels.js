@@ -5,11 +5,9 @@ let listUsersConnectChannel = [];
 function updateListChannel(nameChannel, socket, io, connectedUsers) {
   const user = connectedUsers.find((u) => u.id === socket.id);
   const username = user ? user.name : `user${socket.id}`;
-
   for (let i = 0; i < listUsersConnectChannel.length; i++) {
     if (listUsersConnectChannel[i].nameChannel === nameChannel) {
       let users = listUsersConnectChannel[i].users;
-
       if (!users.some((u) => u.name === username)) {
         users.push({ name: username });
         listUsersConnectChannel[i].users = users;
@@ -23,13 +21,7 @@ function verifUserOnListChannel(user, channel) {
   for (let i = 0; i < listUsersConnectChannel.length; i++) {
     if (listUsersConnectChannel[i].nameChannel === channel) {
       let users = listUsersConnectChannel[i].users;
-      for(let k=0; k<users.length; k++){
-        if(users[k].name == user.name){
-          return true;
-        }else{
-          return false;
-        }
-      }
+      return users.some((u) => u.name === user.name);
     }
   }
   return false;
@@ -48,6 +40,24 @@ function leaveUserListForChannel(channel, socket, io, connectedUsers) {
         io.to(channel).emit("updateUsers", listUsersConnectChannel[i].users);
       }
     }
+  }
+}
+
+function updatePseudo(socket, newName, oldName, io, connectedUsers) {
+  // Parcourt tous les channels pour mettre à jour le pseudo de l'utilisateur
+  for (const channel of listUsersConnectChannel) {
+    const userIndex = channel.users.findIndex((u) => u.name === oldName);
+
+    if (userIndex !== -1) {
+      channel.users[userIndex].name = newName;
+      io.to(channel.nameChannel).emit("updateUsers", channel.users);
+    }
+  }
+
+  // Met à jour le pseudo également dans connectedUsers
+  const user = connectedUsers.find((u) => u.id === socket.id);
+  if (user) {
+    user.name = newName; // Mise à jour du pseudo dans connectedUsers
   }
 }
 
@@ -91,7 +101,6 @@ const channelManager = async (socket, io, connectedUsers) => {
       } else {
         channelList = await Channel.find({});
       }
-      console.log("Liste de channels trouvés :", channelList);
       socket.emit('listChannels', channelList);
     } catch (err) {
       console.error('Erreur lors de la récupération des channels :', err);
@@ -109,7 +118,7 @@ const channelManager = async (socket, io, connectedUsers) => {
       const user = connectedUsers.find((u) => u.id === socket.id);
       const username = user ? user.name : `user${socket.id}`;
 
-      if (!verifUserOnListChannel(username, channelName)) {
+      if (!verifUserOnListChannel({ name: username }, channelName)) {
         socket.join(channelName);
         updateListChannel(channelName, socket, io, connectedUsers);
       } else {
@@ -121,7 +130,6 @@ const channelManager = async (socket, io, connectedUsers) => {
   socket.on('leaveChannel', async (data) => {
     if (data.name) {
       socket.leave(data.name);
-      console.log(`channel leave: ${data.name}`);
       leaveUserListForChannel(data.name, socket, io, connectedUsers);
     }
   });
@@ -149,13 +157,32 @@ const channelManager = async (socket, io, connectedUsers) => {
       return;
     }
 
-    const usersWithNicknames = channelObject.users.map((user) => {
-      const connectedUser = connectedUsers.find((u) => u.name === user);
-      return connectedUser ? connectedUser.name : user;
-    });
-
-    socket.emit("usersInChannel", usersWithNicknames);
+    socket.emit("usersInChannel", channelObject.users);
   });
+
+ 
+socket.on('changeNickname', (data) => {
+  const newNickname = data.name.trim();
+  if (!newNickname) {
+    socket.emit('errors', { error: "Pseudo vide non autorisé" });
+    return;
+  }
+
+  const conflict = connectedUsers.find((u) => u.name === newNickname);
+  if (conflict) {
+    socket.emit('errors', { error: "Ce pseudo est déjà utilisé." });
+    return;
+  }
+
+  const user = connectedUsers.find((u) => u.id === socket.id);
+  if (user) {
+    const oldName = user.name;
+    user.name = newNickname;
+    updatePseudo(socket, newNickname, oldName, io, connectedUsers); // Passer connectedUsers ici
+    io.emit('updateUsers', connectedUsers);
+  }
+});
+
 
   socket.on("disconnecting", () => {
     for (let i = 0; i < listUsersConnectChannel.length; i++) {
