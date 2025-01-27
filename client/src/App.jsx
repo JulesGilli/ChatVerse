@@ -35,7 +35,8 @@ function App() {
         setChannels(channelData);
         setShowChannelList(true);
       },
-      setError            
+      setError ,
+      addNotification            
     );
 
     newSocket.on('usersInChannel', (users) => {
@@ -48,7 +49,7 @@ function App() {
     });
 
     newSocket.on('deleteChannel', (data) => {
-      handleChannelAction('delete', data.name);
+      handleChannelAction('delete', data.name); 
     });
 
     newSocket.on('nicknameChanged', () => {
@@ -165,6 +166,7 @@ function App() {
         case '/delete':
           if (arg && socket) {
             socket.emit('deleteChannel', { name: arg });
+            handleChannelAction('delete', arg);
           }
           break;
 

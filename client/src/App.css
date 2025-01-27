@@ -251,6 +251,11 @@ body {
   text-align: center;
 }
 
+.toast-notification.error {
+  background-color: #d9534f;
+  color: white;
+}
+
 @keyframes slide-down {
   from {
     transform: translateY(-50px);

@@ -4,9 +4,11 @@ export function handleCommand(input, socket, currentUserId, currentChannel) {
   const arg = parts[1];
 
   switch (cmd) {
-    case "/create":
+    case '/create':
       if (arg && socket) {
         socket.emit('createChannel', { name: arg });
+      } else {
+        addNotification('Error: Please provide a channel name to create.');
       }
       break;
 
@@ -32,15 +34,16 @@ export function handleCommand(input, socket, currentUserId, currentChannel) {
       }
       break;
 
-    case "/nick":
+    case '/nick':
       if (!arg) {
-        console.error("Erreur : Aucun pseudonyme n'a été spécifié pour la commande /nick.");
+        addNotification('Error: Please specify a nickname.');
         return;
       }
       if (socket) {
         socket.emit('changeNickname', { name: arg });
       }
-      break;
+        break;
+      
 
     case "/users":
       {

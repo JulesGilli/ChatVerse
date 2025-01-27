@@ -5,7 +5,8 @@ export function createSocketConnection(
   setUsers,
   handleNewMessageCallback,
   onListChannels,  
-  setError        
+  setError,    
+  addNotification    
 ) {
   const newSocket = io('http://localhost:5050');
   
@@ -29,7 +30,11 @@ export function createSocketConnection(
   });
 
   newSocket.on('errors', (data) => {
-    setError(data.error || 'Unknown error');
+    const errorMessage = data.error || 'Unknown error';
+    setError(errorMessage);
+    if (addNotification) {
+      addNotification(`Error: ${errorMessage}`);
+    }
   });
 
   newSocket.on('usersInChannel', (users) => {
