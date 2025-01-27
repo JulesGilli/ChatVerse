@@ -5,6 +5,7 @@ import ChatWindow from './components/ChatWindow.jsx';
 import ChannelListWindow from './components/ChannelListWindow.jsx';
 import UserListWindow from './components/UserListWindow.jsx';
 import CommandInput from './components/CommandInput.jsx';
+import ToastNotification from './components/ToastNotification.jsx';
 import { createSocketConnection } from './socketService';
 
 function App() {
@@ -23,6 +24,8 @@ function App() {
   const [channelUsers, setChannelUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false); 
 
+  const [notifications, setNotifications] = useState([]);
+
   useEffect(() => {
     const newSocket = createSocketConnection(
       setCurrentUserId,  
@@ -38,6 +41,18 @@ function App() {
     newSocket.on('usersInChannel', (users) => {
       setChannelUsers(users);
       setShowUserList(true);
+    });
+
+    newSocket.on('newChannel', (data) => {
+      handleChannelAction('create', data.name);
+    });
+
+    newSocket.on('deleteChannel', (data) => {
+      handleChannelAction('delete', data.name);
+    });
+
+    newSocket.on('nicknameChanged', () => {
+      handleChannelAction('rename');
     });
 
     setSocket(newSocket);
@@ -65,6 +80,37 @@ function App() {
       return [...prev, { name: channelName, messages: [] }];
     });
     setSelectedChannel(channelName);
+    handleChannelAction('join', channelName);
+  };
+
+  const addNotification = (message) => {
+    setNotifications((prev) => [...prev, { id: Date.now(), message }]);
+  };
+
+  const removeNotification = (id) => {
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+  };
+
+  const handleChannelAction = (action, channelName) => {
+    switch (action) {
+      case 'create':
+        addNotification(`Channel "${channelName}" created successfully!`);
+        break;
+      case 'delete':
+        addNotification(`Channel "${channelName}" deleted.`);
+        break;
+      case 'join':
+        addNotification(`You joined the channel "${channelName}".`);
+        break;
+      case 'quit':
+        addNotification(`You left the channel "${channelName}".`);
+        break;
+      case 'rename':
+        addNotification('Your nickname was changed successfully.');
+        break;
+      default:
+        break;
+    }
   };
 
   const handleUserCommand = (fullInput) => {
@@ -103,6 +149,7 @@ function App() {
             if (selectedChannel === arg) {
               setSelectedChannel(null);
             }
+            handleChannelAction('quit', arg);
           }
           break;
 
@@ -192,6 +239,15 @@ function App() {
 
   return (
     <div className="app-container">
+      <div className="toast-container">
+        {notifications.map((notification) => (
+          <ToastNotification
+            key={notification.id}
+            message={notification.message}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
+      </div>
       <Sidebar
         users={users}
         joinedChannels={joinedChannels}
