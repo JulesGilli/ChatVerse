@@ -23,9 +23,10 @@ function Sidebar({ users, channels, onCommand, currentFail }) {
       <h1>Users</h1>
       <ul>
         {users.map((user, index) => (
-          <li key={index}>{user}</li>
+          <li key={index}>{user.name}</li>
         ))}
       </ul>
+
       <h1>Channels</h1>
       <ul>
         {channels.map((channel, index) => (
@@ -57,7 +58,6 @@ function Sidebar({ users, channels, onCommand, currentFail }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
