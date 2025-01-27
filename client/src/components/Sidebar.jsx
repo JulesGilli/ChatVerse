@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Sidebar({ users, channels, onCommand, currentFail }) {
+function Sidebar({ users, joinedChannels, onCommand, currentFail }) {
   const [showInput, setShowInput] = useState(false); 
   const [actionType, setActionType] = useState('');
   const [channelName, setChannelName] = useState('');
@@ -29,7 +29,7 @@ function Sidebar({ users, channels, onCommand, currentFail }) {
 
       <h1>Channels</h1>
       <ul>
-        {channels.map((channel, index) => (
+        {joinedChannels.map((channel, index) => (
           <li key={index} onClick={() => onCommand(`/join ${channel.name}`)}>
             {channel.name}
           </li>

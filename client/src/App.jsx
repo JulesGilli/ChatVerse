@@ -176,7 +176,7 @@ function App() {
     <div className="app-container">
       <Sidebar
         users={users}
-        channels={channels}
+        joinedChannels={joinedChannels}
         onCommand={handleUserCommand}
         currentFail={currentFail}
       />
