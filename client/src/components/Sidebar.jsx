@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Sidebar({ users, joinedChannels, onCommand, currentFail }) {
+function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel}) {
   const [showInput, setShowInput] = useState(false); 
   const [actionType, setActionType] = useState('');
   const [channelName, setChannelName] = useState('');
@@ -27,13 +27,20 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail }) {
         ))}
       </ul>
 
-      <h1>Channels</h1>
+      <h1>My Channels</h1>
       <ul>
-        {joinedChannels.map((channel, index) => (
-          <li key={index} onClick={() => onCommand(`/join ${channel.name}`)}>
-            {channel.name}
-          </li>
-        ))}
+        {joinedChannels.map((channel, index) => {
+          const isSelected = channel.name === selectedChannel;
+          return (
+            <li
+              key={index}
+              onClick={() => onCommand(`/join ${channel.name}`)}
+              className={isSelected ? 'selected-channel' : ''}
+            >
+              {channel.name}
+            </li>
+          );
+        })}
       </ul>
 
       <h2>Actions</h2>

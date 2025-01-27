@@ -104,16 +104,17 @@ const channelManager = async (socket, io, connectedUsers) => {
     if (!check) {
       socket.emit('errors', { error: "Erreur : le channel n'existe pas" });
       return;
-    }
-
-    const user = connectedUsers.find((u) => u.id === socket.id);
-    const username = user ? user.name : `user${socket.id}`;
-
-    if (!verifUserOnListChannel(username, channelName)) {
-      socket.join(channelName);
-      updateListChannel(channelName, socket, io, connectedUsers);
     } else {
-      socket.emit('errors', { error: "Erreur : vous avez déjà rejoint ce channel" });
+
+      const user = connectedUsers.find((u) => u.id === socket.id);
+      const username = user ? user.name : `user${socket.id}`;
+
+      if (!verifUserOnListChannel(username, channelName)) {
+        socket.join(channelName);
+        updateListChannel(channelName, socket, io, connectedUsers);
+      } else {
+        socket.emit('errors', { error: "Erreur : vous avez déjà rejoint ce channel" });
+      }
     }
   });
 

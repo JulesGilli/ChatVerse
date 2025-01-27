@@ -179,6 +179,7 @@ function App() {
         joinedChannels={joinedChannels}
         onCommand={handleUserCommand}
         currentFail={currentFail}
+        selectedChannel={selectedChannel}
       />
       <div className="main-content">
         {showChannelList ? (
