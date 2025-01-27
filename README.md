@@ -12,9 +12,7 @@
 5. [Installation](#-installation)  
 6. [Utilisation](#-utilisation)  
 7. [Tests](#-tests)  
-8. [Déploiement](#-déploiement)  
-9. [Contributions](#️-contributions)  
-10. [Auteurs](#-auteurs)  
+8. [Auteurs](#-auteurs)  
 
 ---
 
