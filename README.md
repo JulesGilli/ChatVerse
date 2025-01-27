@@ -63,24 +63,29 @@ ChatVerse est une plateforme de messagerie en temps réel qui permet aux utilisa
 ## 🚀 Installation  
 
 ### Backend  
-1. Clonez le dépôt :  
+1. Clonez le dépôt et déplacez vous dedans:  
    ```bash
    git clone <repository_url>
+   cd T-JSF-600-TLS_2
    ```  
 2. Installez les dépendances :  
    ```bash
-   npm install
+   cd server
+   npm install --save
    ```  
-3. Configurez le fichier `.env` avec les paramètres fournis par nos experts
+3. Renomez le fichier `.envTemplate` en `.env` et remplissez les deux champs avec les paramètres fournis par nos experts 
+
+
 4. Démarrez le serveur :  
    ```bash
-   npm run start
+   node ./server.js
    ```  
 
 ### Frontend  
 1. Allez dans le dossier frontend :  
    ```bash
-   cd chatverse/frontend
+   cd ..
+   cd client
    ```  
 2. Installez les dépendances :  
    ```bash
@@ -95,7 +100,7 @@ ChatVerse est une plateforme de messagerie en temps réel qui permet aux utilisa
 
 ## 📖 Utilisation  
 
-1. Connectez-vous ou inscrivez-vous via l'interface.  
+1. Connectez-vous via l'interface.  
 2. Rejoignez un canal existant ou créez le vôtre.  
 3. Discutez en temps réel avec les autres utilisateurs ou envoyez des messages privés.  
 
@@ -116,21 +121,7 @@ ChatVerse est une plateforme de messagerie en temps réel qui permet aux utilisa
    ```  
 
 ### Types de tests inclus  
-- **Unitaires** : Tests pour les fonctions critiques.  
-- **End-to-End** : Vérification des workflows utilisateurs.  
-- **Couverture** : Génération de rapports détaillés.  
-
----
-
-## 📦 Déploiement  
-
-1. Construisez le projet :  
-   ```bash
-   npm run build
-   ```  
-2. Déployez les fichiers générés sur un service cloud (AWS, Heroku, Vercel).  
-
----
+- **Unitaires** : Tests pour les fonctions critiques.   
 
 
 ## ✨ Auteurs  
