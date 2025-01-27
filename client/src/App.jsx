@@ -57,7 +57,7 @@ function App() {
   const [messagesHistory, setHistoryMessage] = useState([]);
   const [messages, setMessages] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [currentChannel, setCurrentChannel] = useState(null);
+  const [currentChannel, setCurrentChannel] = useState();
   const [currentFail, setError] = useState('');
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -83,7 +83,7 @@ function App() {
   }, []);
 
   const handleUserCommand = (input) => {
-    handleCommand(input, socket, currentUserId, setShowChannelList);
+    handleCommand(input, socket, currentUserId, currentChannel, setShowChannelList);
     setInput('');
     setSuggestions([]);
   };

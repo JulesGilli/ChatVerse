@@ -1,5 +1,5 @@
 // commandManager.js
-export function handleCommand(input, socket, currentUserId) {
+export function handleCommand(input, socket, currentUserId, currentChannel) {
   const trimmedInput = input.trim();
 
   if (trimmedInput.startsWith('/create')) {
@@ -28,6 +28,7 @@ export function handleCommand(input, socket, currentUserId) {
       socket.emit('sendMessage', {
         userId: `user${currentUserId}`,
         content: trimmedInput,
+        channel: currentChannel
       });
     }
   }
