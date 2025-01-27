@@ -1,50 +1,35 @@
 const messageManager = require('./messages'); 
 const Message = require('../models/Message');
 
-const connectionManager = async (socket, io, connectedUsers) => {
+let connectedUsers = [];
+
+const connectionManager = async (socket, io) => {
   let userName = `user${socket.id}`;
   console.log(`${userName} s'est connecté`);
-  socket.data.userName = userName;
-  connectedUsers.push({ id: socket.id, name: userName });
-
-  io.emit('updateUsers', connectedUsers);
-
+  connectedUsers.push({ name: userName });
+ 
   const messageHistory = await Message.find({});
   socket.emit('messageHistory', messageHistory);
-
+ 
   socket.on('changeNickname', (data) => {
-    const newNickname = data.name.trim();
-    if (!newNickname) {
-      socket.emit('errors', { error: "Pseudo vide non autorisé" });
-      return;
-    }
-
-    const conflict = connectedUsers.find((u) => u.name === newNickname);
-    if (conflict) {
-      socket.emit('errors', { error: "Ce pseudo est déjà utilisé." });
-      return;
-    }
-
-    const user = connectedUsers.find((u) => u.id === socket.id);
+    const newNickname = data.name;
+    const user = connectedUsers.find((user) => user.name === userName);
     if (user) {
+      let lastName = user.name;
       user.name = newNickname;
+      userName = newNickname;
       io.emit('updateUsers', connectedUsers);
-      socket.data.userName = newNickname;
+      socket.emit('updateUsername', userName, lastName);
     }
   });
 
   socket.on('disconnect', () => {
     console.log(`${userName} s'est déconnecté`);
-
-    const index = connectedUsers.findIndex((user) => user.id === socket.id);
-
-    if (index !== -1) {
-      connectedUsers.splice(index, 1); 
-    }
-
+    connectedUsers = connectedUsers.filter((user) => user.name !== userName);
     io.emit('updateUsers', connectedUsers);
   });
 
+  messageManager(socket, io, connectedUsers);
 };
-
+ 
 module.exports = connectionManager;

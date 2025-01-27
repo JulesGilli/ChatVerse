@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 
-function ChatWindow({ messages, currentUserId, users }) {
+function ChatWindow({ messages, messageHistory, currentUserId, users }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, messageHistory]);
 
   const getNickname = (userId) => {
     const user = users.find((u) => u.id === userId);
@@ -17,11 +17,21 @@ function ChatWindow({ messages, currentUserId, users }) {
   return (
     <div className="chat-window">
       <div className="messages">
+        {messageHistory.map((msg, index) => (
+          <div
+            key={index}
+            className={`message ${
+              getNickname(msg.userId) === getNickname(currentUserId) ? 'sent' : 'received'
+            }`}
+          >
+            <strong>{getNickname(msg.userId)}:</strong> {msg.content}
+          </div>
+        ))}
         {messages.map((msg, index) => (
           <div
             key={index}
             className={`message ${
-              msg.userId === currentUserId ? 'sent' : 'received'
+              getNickname(msg.userId) === getNickname(currentUserId) ? 'sent' : 'received'
             }`}
           >
             <strong>{getNickname(msg.userId)}:</strong> {msg.content}
