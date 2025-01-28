@@ -373,12 +373,12 @@ body {
 }
 
 .input-container button:last-child {
-  background-color: #c2362c;
+  background-color: #333;
   color: white;
 }
 
 .input-container button:last-child:hover {
-  background-color: #b12c2a;
+  background-color: #424242;
 }
 
 
