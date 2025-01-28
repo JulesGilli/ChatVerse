@@ -108,22 +108,27 @@ const channelManager = async (socket, io, connectedUsers) => {
   });
 
   socket.on('joinChannel', async (data) => {
-    const channelName = data.name;
-    const check = await Channel.findOne({ name: channelName });
-    if (!check) {
-      socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
-      return;
-    } 
-
-      const user = connectedUsers.find((u) => u.id === socket.id);
-      const username = user ? user.name : `user${socket.id}`;
-
-      if (!verifUserOnListChannel({ name: username }, channelName)) {
-        socket.join(channelName);
-        updateListChannel(channelName, socket, io, connectedUsers);
+    try {
+      const channelName = data.name;
+      const check = await Channel.findOne({ name: channelName });
+      if (!check) {
+        socket.emit('errors', { code: 404, error: "channel don't exist" });
+        return;
       } else {
-        socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+        const user = connectedUsers.find((u) => u.id === socket.id);
+        const username = user ? user.name : `user${socket.id}`;
+  
+        if (!verifUserOnListChannel({ name: username }, channelName)) {
+          socket.join(channelName);
+          updateListChannel(channelName, socket, io, connectedUsers);
+          console.log("40040")
+        } else {
+          socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+        }
       }
+    } catch (error) {
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to join channel." });
+    }
   });
 
   socket.on('leaveChannel', async (data) => {

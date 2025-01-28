@@ -33,27 +33,7 @@ const messageManager = (socket, io, connectedUsers) => {
     } catch (err) {
       console.error("Erreur lors de l'enregistrement du message :", err);
     }
-  });
-
-  const Channel = require('../models/Channel'); // Importer le modèle de channel
-
-  socket.on('joinChannel', async (data, callback) => {
-    const channelName = data.name;
-  
-    try {
-      const check = await Channel.findOne({ name: channelName });
-      if (!check) {
-        callback({ error: "Erreur : le channel n'existe pas" });
-      } else {
-        socket.join(channelName);
-        callback({ success: true });
-      }
-    } catch (error) {
-      console.error('Erreur lors de la recherche du channel :', error);
-      callback({ error: "Erreur : une erreur est survenue lors de la recherche du channel" });
-    }
-  });
-  
+  });  
   
   socket.on('privateMessage', (data) => {
     const { to, content } = data;
