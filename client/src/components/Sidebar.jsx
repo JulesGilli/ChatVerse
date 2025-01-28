@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import logo from '../assets/Logo.png';
+import renameIcon from '../assets/Rename.png';
+import showIcon from '../assets/Show.png';
+import createIcon from '../assets/Create.png';
+import deleteIcon from '../assets/Delete.png';
 
 function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel, onShowChannelList }) {
   const [showInput, setShowInput] = useState(false);
@@ -46,11 +50,18 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       </div>
 
       <h2>Actions</h2>
-      <button onClick={() => handleButtonClick('create')}>Create Channel</button>
-      <button onClick={() => handleButtonClick('delete')}>Delete Channel</button>
-      <button onClick={() => setShowRenameInput(true)}>Rename</button>
-      <button onClick={() => onCommand('/list')}>Show Channels</button>
-
+      <button onClick={() => handleButtonClick('create')}>
+        <img src={createIcon} alt="Create Icon" className="icon" /> Create Channel
+      </button>
+      <button onClick={() => handleButtonClick('delete')}>
+        <img src={deleteIcon} alt="Delete Icon" className="icon" /> Delete Channel
+      </button>
+      <button onClick={() => setShowRenameInput(true)}>
+        <img src={renameIcon} alt="Rename Icon" className="icon" /> Rename
+      </button>
+      <button onClick={() => onCommand('/list')}>
+        <img src={showIcon} alt="Show Icon" className="icon" /> Show Channels
+      </button>
 
       {showRenameInput && (
         <div className="input-overlay">
