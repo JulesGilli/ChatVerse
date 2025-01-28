@@ -1,6 +1,6 @@
 import React from 'react';
 
-function ChannelListWindow({ channels, onClose }) {
+function ChannelListWindow({ channels, onClose, onJoinChannel }) {
   return (
     <div className="channel-list-window">
       <button className="close-button" onClick={onClose}>
@@ -14,7 +14,7 @@ function ChannelListWindow({ channels, onClose }) {
           <div
             key={index}
             className="channel-item"
-            onClick={() => console.log(`Joining ${channel.name}`)}
+            onClick={() => onJoinChannel(channel.name)}
           >
             {channel.name}
           </div>

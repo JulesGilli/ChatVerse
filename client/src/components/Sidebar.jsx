@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logo from '../assets/logo.png';
+import logo from '../assets/Logo.png';
 
 function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel }) {
   const [showInput, setShowInput] = useState(false);

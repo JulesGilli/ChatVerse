@@ -22,7 +22,7 @@ function App() {
   const [selectedChannel, setSelectedChannel] = useState(null);
 
   const [channelUsers, setChannelUsers] = useState([]);
-  const [showUserList, setShowUserList] = useState(false); 
+  const [showUserList, setShowUserList] = useState(false);
 
   const [notifications, setNotifications] = useState([]);
 
@@ -37,9 +37,9 @@ function App() {
       },
       setError,
       addNotification,
-      handleChannelAction, 
-      setChannelUsers, 
-      setShowUserList 
+      handleChannelAction,
+      setChannelUsers,
+      setShowUserList
     );
 
     setSocket(newSocket);
@@ -62,14 +62,14 @@ function App() {
   const onJoinChannel = (channelName) => {
     setJoinedChannels((prev) => {
       if (prev.find((c) => c.name === channelName)) {
-        return prev; 
+        return prev;
       }
       return [...prev, { name: channelName, messages: [] }];
     });
-    setSelectedChannel(channelName); 
+    setSelectedChannel(channelName);
     handleChannelAction('join', channelName);
   };
-  
+
 
   const addNotification = (message) => {
     setNotifications((prev) => [...prev, { id: Date.now(), message }]);
@@ -105,7 +105,7 @@ function App() {
     const parts = fullInput.trim().split(' ');
     const cmd = parts[0];
     const arg = parts[1];
-    
+
 
     if (cmd.startsWith('/')) {
       switch (cmd) {
@@ -120,7 +120,7 @@ function App() {
             socket.emit('getChannels', { filter: arg });
           }
           break;
-  
+
         case '/join':
           if (arg && socket) {
             socket.emit('joinChannel', { name: arg }, (response) => {
@@ -195,10 +195,10 @@ function App() {
           }
           break;
 
-          default:
-            console.log("Unknown command:", cmd);
-            break;
-        }
+        default:
+          console.log("Unknown command:", cmd);
+          break;
+      }
     } else {
       if (fullInput.trim() && socket && selectedChannel) {
         socket.emit('sendMessage', {
@@ -251,8 +251,9 @@ function App() {
           <ChannelListWindow
             channels={channels}
             onClose={() => setShowChannelList(false)}
+            onJoinChannel={(channelName) => handleUserCommand(`/join ${channelName}`)}
           />
-        ) : showUserList ? ( 
+        ) : showUserList ? (
           <UserListWindow
             users={channelUsers}
             onClose={() => setShowUserList(false)}
@@ -275,6 +276,7 @@ function App() {
             />
           </>
         )}
+
       </div>
     </div>
   );
