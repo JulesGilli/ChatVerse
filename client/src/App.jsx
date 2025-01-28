@@ -133,13 +133,18 @@ function App() {
             socket.emit('getChannels', { filter: arg });
           }
           break;
-
+  
         case '/join':
           if (arg && socket) {
-            socket.emit('joinChannel', { name: arg });
-            onJoinChannel(arg);
+            socket.emit('joinChannel', { name: arg }, (response) => {
+              if (response.error) {
+                console.error(response.error);
+              } else {
+                onJoinChannel(arg);
+              }
+            });
           }
-          break;
+          
 
         case '/quit':
           if (arg && socket) {
