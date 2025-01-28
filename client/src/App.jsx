@@ -146,6 +146,13 @@ function App() {
           }
           break;
 
+        case '/select':
+          if (arg) {
+            setSelectedChannel(arg);
+            handleChannelAction('select', arg);
+          }
+          break;
+
         case '/users':
           {
             const channelToList = arg || selectedChannel;

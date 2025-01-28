@@ -19,6 +19,15 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
     }
   };
 
+  const handleChannelClick = (channel) => {
+    if (selectedChannel === channel) {
+      return;
+    }
+    if (joinedChannels.some((chan) => chan.name === channel)) {
+      onCommand(`/select ${channel}`);
+    }
+  };
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -47,7 +56,7 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
             return (
               <li
                 key={index}
-                onClick={() => onCommand(`/join ${channel.name}`)}
+                onClick={() => handleChannelClick(channel.name)}
                 className={isSelected ? 'selected-channel' : ''}
               >
                 {channel.name}
