@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import logo from '../assets/Logo.png';
 
-function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel }) {
+function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel, onShowChannelList }) {
   const [showInput, setShowInput] = useState(false);
   const [actionType, setActionType] = useState('');
   const [channelName, setChannelName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [showRenameInput, setShowRenameInput] = useState(false);
 
   const handleButtonClick = (type) => {
     setActionType(type);
@@ -16,6 +18,14 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       onCommand(`/${actionType} ${channelName}`);
       setChannelName('');
       setShowInput(false);
+    }
+  };
+
+  const handleRenameSubmit = () => {
+    if (nickname.trim()) {
+      onCommand(`/nick ${nickname}`);
+      setNickname('');
+      setShowRenameInput(false);
     }
   };
 
@@ -38,6 +48,25 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       <h2>Actions</h2>
       <button onClick={() => handleButtonClick('create')}>Create Channel</button>
       <button onClick={() => handleButtonClick('delete')}>Delete Channel</button>
+      <button onClick={() => setShowRenameInput(true)}>Rename</button>
+      <button onClick={() => onCommand('/list')}>Show Channels</button>
+
+
+      {showRenameInput && (
+        <div className="input-overlay">
+          <div className="input-container">
+            <h3>Rename</h3>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Enter new nickname"
+            />
+            <button onClick={handleRenameSubmit}>Submit</button>
+            <button onClick={() => setShowRenameInput(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <h1>Users</h1>
       <ul>

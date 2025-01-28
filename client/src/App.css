@@ -79,7 +79,7 @@ body {
   margin: 5px 0;
   padding: 10px;
   width: 100%;
-  background-color: #DA6167;
+  background-color: #494949;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -88,7 +88,7 @@ body {
 }
 
 .sidebar button:hover {
-  background-color: #e14b51;
+  background-color: #DA6167;
 }
 
 .channel-list-window {

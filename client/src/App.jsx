@@ -49,6 +49,10 @@ function App() {
     };
   }, []);
 
+  const handleShowChannelList = () => {
+    setShowChannelList(true);
+  };
+
   const handleNewMessage = (message) => {
     setJoinedChannels((prev) =>
       prev.map((chan) =>
@@ -146,6 +150,19 @@ function App() {
           }
           break;
 
+        case '/list':
+          if (socket) {
+            socket.emit('getChannels', { filter: arg }, (response) => {
+              if (response?.error) {
+                addNotification(`Error: ${response.error}`);
+              } else {
+                setChannels(response.channels || []);
+                setShowChannelList(true); 
+              }
+            });
+          }
+          break;
+          
         case '/select':
           if (arg) {
             setSelectedChannel(arg);
@@ -245,6 +262,7 @@ function App() {
         onCommand={handleUserCommand}
         currentFail={currentFail}
         selectedChannel={selectedChannel}
+        onShowChannelList={handleShowChannelList}
       />
       <div className="main-content">
         {showChannelList ? (
