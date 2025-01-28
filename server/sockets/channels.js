@@ -129,6 +129,7 @@ const channelManager = async (socket, io, connectedUsers) => {
       if (!verifUserOnListChannel({ name: username }, channelName)) {
         socket.join(channelName);
         updateListChannel(channelName, socket, io, connectedUsers);
+        socket.broadcast.to(channelName).emit('notifChannel',user.name + " join the channel " + channelName);
         callback({ success: true });
       } else {
         callback({ error: "error 409: Conflict: You are already in this channel." });
@@ -143,6 +144,7 @@ const channelManager = async (socket, io, connectedUsers) => {
     if (data.name) {
       socket.leave(data.name);
       leaveUserListForChannel(data.name, socket, io, connectedUsers);
+      socket.broadcast.to(data.name).emit('notifChannel', user.name + " quit the channel " + channelName);
     }
   });
 
