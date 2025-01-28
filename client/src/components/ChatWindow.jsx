@@ -9,11 +9,6 @@ function ChatWindow({ messages, currentUserId, users }) {
     }
   }, [messages]);
 
-  const getNickname = (userId) => {
-    const user = users.find((u) => u.id === userId);
-    return user ? user.name : userId;
-  };
-
   return (
     <div className="chat-window">
       <div className="messages">
@@ -24,7 +19,7 @@ function ChatWindow({ messages, currentUserId, users }) {
               msg.userId === currentUserId ? 'sent' : 'received'
             }`}
           >
-            <strong>{getNickname(msg.userId)}:</strong> {msg.content}
+            <strong>{msg.userName}:</strong> {msg.content}
           </div>
         ))}
         <div ref={messagesEndRef} style={{ height: 0, margin: 0, padding: 0 }} />
