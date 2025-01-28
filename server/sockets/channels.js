@@ -107,13 +107,12 @@ const channelManager = async (socket, io, connectedUsers) => {
     }
   });
 
-  socket.on('joinChannel', async (data) => {
+  socket.on('joinChannel', async (data,callback) => {
     try {
       const channelName = data.name;
       const check = await Channel.findOne({ name: channelName });
       if (!check) {
-        socket.emit('errors', { code: 404, error: "channel don't exist" });
-        return;
+        callback({ error: "404 channel don't exist" });
       } else {
         const user = connectedUsers.find((u) => u.id === socket.id);
         const username = user ? user.name : `user${socket.id}`;
@@ -121,9 +120,9 @@ const channelManager = async (socket, io, connectedUsers) => {
         if (!verifUserOnListChannel({ name: username }, channelName)) {
           socket.join(channelName);
           updateListChannel(channelName, socket, io, connectedUsers);
-          console.log("40040")
+          callback({ success: true });
         } else {
-          socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+          callback({ error: "error 409: Conflict: You are already in this channel." });
         }
       }
     } catch (error) {

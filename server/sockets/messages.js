@@ -1,11 +1,10 @@
 const Message = require('../models/Message');
 
-// Function to get the message history for a channel
 const getMessageHistory = async (channelName) => {
   try {
-    // Fetch the last 50 messages (you can adjust this number)
+
     const messages = await Message.find({ channel: channelName }).sort({ createdAt: -1 }).limit(50);
-    return messages.reverse(); // Reverse to get messages from oldest to newest
+    return messages.reverse(); 
   } catch (err) {
     console.error("Erreur lors de la récupération de l'historique des messages :", err);
     return [];
@@ -18,17 +17,14 @@ const messageManager = (socket, io, connectedUsers) => {
       const user = connectedUsers.find((u) => u.id === socket.id);
       const userId = socket.id;
 
-      // Create a new message document
       const newMessage = new Message({
         userId: socket.id,
         content: data.content,
         channel: data.channel,
       });
 
-      // Save the message in the database
       await newMessage.save();
 
-      // Emit the new message to all users in the channel
       io.to(data.channel).emit('newMessage', newMessage);
     } catch (err) {
       console.error("Erreur lors de l'enregistrement du message :", err);
