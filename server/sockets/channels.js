@@ -212,7 +212,7 @@ socket.on('changeNickname', (data) => {
     const oldName = user.name;
     user.name = newNickname;
     updatePseudo(socket, newNickname, oldName, io, connectedUsers); 
-    io.emit('nicknameChanged');
+    io.emit('updateUsers', connectedUsers);
   }
 });
 

@@ -28,33 +28,19 @@ function App() {
 
   useEffect(() => {
     const newSocket = createSocketConnection(
-      setCurrentUserId,  
-      setUsers,          
-      handleNewMessage,  
-      (channelData) => {  
+      setCurrentUserId,
+      setUsers,
+      handleNewMessage,
+      (channelData) => {
         setChannels(channelData);
         setShowChannelList(true);
       },
-      setError ,
-      addNotification            
+      setError,
+      addNotification,
+      handleChannelAction, 
+      setChannelUsers, 
+      setShowUserList 
     );
-
-    newSocket.on('usersInChannel', (users) => {
-      setChannelUsers(users);
-      setShowUserList(true);
-    });
-
-    newSocket.on('newChannel', (data) => {
-      handleChannelAction('create', data.name);
-    });
-
-    newSocket.on('deleteChannel', (data) => {
-      handleChannelAction('delete', data.name); 
-    });
-
-    newSocket.on('nicknameChanged', () => {
-      handleChannelAction('rename');
-    });
 
     setSocket(newSocket);
 

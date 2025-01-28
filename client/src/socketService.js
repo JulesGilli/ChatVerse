@@ -6,7 +6,10 @@ export function createSocketConnection(
   handleNewMessageCallback,
   onListChannels,  
   setError,    
-  addNotification    
+  addNotification ,
+  handleChannelAction, 
+  setChannelUsers,
+  setShowUserList   
 ) {
   const newSocket = io('http://localhost:5050');
   
@@ -38,6 +41,26 @@ export function createSocketConnection(
     }
   });
   
+    newSocket.on('usersInChannel', (users) => {
+      setChannelUsers(users);
+      setShowUserList(true);
+    });
+  
+    newSocket.on('newChannel', (data) => {
+      handleChannelAction('create', data.name);
+    });
+  
+    newSocket.on('deleteChannel', (data) => {
+      handleChannelAction('delete', data.name);
+    });
+  
+    newSocket.on('nicknameChanged', () => {
+      handleChannelAction('rename');
+    });
+  
+    newSocket.on('privateMessage', (data) => {
+      console.log('Message privé reçu de :', data.from, ':', data.content);
+    });
 
   newSocket.on('usersInChannel', (users) => {
     console.log('Utilisateurs dans ce canal :', users);
