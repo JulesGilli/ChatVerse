@@ -6,7 +6,7 @@ export function handleCommand(input, socket, currentUserId, currentChannel) {
   switch (cmd) {
     case '/create':
       if (arg && socket) {
-        socket.emit('createChannel', { name: arg });
+        socket.emit('createChannel', { name: arg, isPrivate: false});
       } else {
         addNotification('Error: Please provide a channel name to create.');
       }
