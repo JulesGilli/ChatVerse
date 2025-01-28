@@ -15,10 +15,11 @@ const messageManager = (socket, io, connectedUsers) => {
   socket.on('sendMessage', async (data) => {
     try {
       const user = connectedUsers.find((u) => u.id === socket.id);
+      console.log(user);
       const userId = socket.id;
-
       const newMessage = new Message({
         userId: socket.id,
+        userName: user.name,
         content: data.content,
         channel: data.channel,
       });
