@@ -76,17 +76,25 @@ const channelManager = async (socket, io, connectedUsers) => {
       if (!exist) {
         const newChannel = new Channel({ name: data.name });
         await newChannel.save();
+
         listUsersConnectChannel.push({
           nameChannel: data.name,
           users: []
         });
+
         io.emit('newChannel', newChannel);
       } else {
-        socket.emit('errors', { code: 409, error: "Conflict: Channel already exists." });
+        socket.emit('errors', {
+          code: 409,
+          error: "Conflict: Channel already exists."
+        });
       }
     } catch (err) {
       console.error('Error creating channel:', err);
-      socket.emit('errors', { code: 500, error: "Internal server error: Unable to create channel." });
+      socket.emit('errors', {
+        code: 500,
+        error: "Internal server error: Unable to create channel."
+      });
     }
   });
 
@@ -103,11 +111,14 @@ const channelManager = async (socket, io, connectedUsers) => {
       socket.emit('listChannels', channelList);
     } catch (err) {
       console.error('Error retrieving channels:', err);
-      socket.emit('errors', { code: 500, error: "Internal server error: Unable to retrieve channels." });
+      socket.emit('errors', {
+        code: 500,
+        error: "Internal server error: Unable to retrieve channels."
+      });    
     }
   });
 
-  socket.on('joinChannel', async (data,callback) => {
+  socket.on('joinChannel', async (data, callback) => {
     try {
       const channelName = data.name;
       const check = await Channel.findOne({ name: channelName });
@@ -126,9 +137,10 @@ const channelManager = async (socket, io, connectedUsers) => {
         }
       }
     } catch (error) {
-      socket.emit('errors', { code: 500, error: "Internal server error: Unable to join channel." });
+      callback({ error: "Internal server error: Unable to join channel." });
     }
   });
+  
 
   socket.on('leaveChannel', async (data) => {
     if (data.name) {
@@ -147,13 +159,20 @@ const channelManager = async (socket, io, connectedUsers) => {
         listUsersConnectChannel = listUsersConnectChannel.filter(
           (obj) => obj.nameChannel !== data.name
         );
-        socket.emit('errors', { code: 200, error: `Success: Channel "${data.name}" deleted.` });
+
+        io.emit('deleteChannel', { name: data.name });
       } else {
-        socket.emit('errors', { code: 404, error: "Not found: Channel does not exist." });
+        socket.emit('errors', {
+          code: 404,
+          error: "Not found: Channel does not exist."
+        });      
       }
     } catch (err) {
       console.error('Error deleting channel:', err);
-      socket.emit('errors', { code: 500, error: "Internal server error: Unable to delete channel." });
+      socket.emit('errors', {
+        code: 500,
+        error: "Internal server error: Unable to delete channel."
+      });    
     }
   });
 
@@ -164,7 +183,10 @@ const channelManager = async (socket, io, connectedUsers) => {
     );
 
     if (!channelObject) {
-      socket.emit("errors", { code: 404, error: "Not found: Channel does not exist." });
+      socket.emit("errors", {
+        code: 404,
+        error: "Not found: Channel does not exist."
+      });      
       return;
     }
 
@@ -175,13 +197,13 @@ const channelManager = async (socket, io, connectedUsers) => {
 socket.on('changeNickname', (data) => {
   const newNickname = data.name.trim();
   if (!newNickname) {
-    socket.emit('errors', { error: "Pseudo vide non autorisé" });
+    socket.emit('errors', { error: "Empty nickname not allowed." });
     return;
   }
 
   const conflict = connectedUsers.find((u) => u.name === newNickname);
   if (conflict) {
-    socket.emit('errors', { error: "Ce pseudo est déjà utilisé." });
+    socket.emit('errors', { error: "That nickname is already in use." });
     return;
   }
 
@@ -190,7 +212,7 @@ socket.on('changeNickname', (data) => {
     const oldName = user.name;
     user.name = newNickname;
     updatePseudo(socket, newNickname, oldName, io, connectedUsers); 
-    io.emit('updateUsers', connectedUsers);
+    io.emit('nicknameChanged');
   }
 });
 

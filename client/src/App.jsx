@@ -76,13 +76,14 @@ function App() {
   const onJoinChannel = (channelName) => {
     setJoinedChannels((prev) => {
       if (prev.find((c) => c.name === channelName)) {
-        return prev;
+        return prev; 
       }
       return [...prev, { name: channelName, messages: [] }];
     });
-    setSelectedChannel(channelName);
+    setSelectedChannel(channelName); 
     handleChannelAction('join', channelName);
   };
+  
 
   const addNotification = (message) => {
     setNotifications((prev) => [...prev, { id: Date.now(), message }]);
@@ -137,14 +138,14 @@ function App() {
         case '/join':
           if (arg && socket) {
             socket.emit('joinChannel', { name: arg }, (response) => {
-              if (response.error) {
-                console.error(response.error);
+              if (response?.error) {
+                addNotification(`Error: ${response.error}`);
               } else {
                 onJoinChannel(arg);
               }
             });
           }
-          
+          break;
 
         case '/quit':
           if (arg && socket) {
@@ -160,24 +161,25 @@ function App() {
           break;
 
         case '/users':
-          const channelToList = arg || selectedChannel;
-          if (!channelToList) {
-            console.error("Aucun canal spécifié ni sélectionné pour /users.");
-            break;
+          {
+            const channelToList = arg || selectedChannel;
+            if (!channelToList) {
+              console.error("Error: No channel specified or selected for /users.");
+              break;
+            }
+            socket.emit('listUsersInChannel', { name: channelToList });
           }
-          socket.emit('listUsersInChannel', { name: channelToList });
           break;
 
         case '/delete':
           if (arg && socket) {
             socket.emit('deleteChannel', { name: arg });
-            handleChannelAction('delete', arg);
           }
           break;
 
         case '/nick':
           if (!arg) {
-            console.error("Erreur : Aucun pseudonyme n'a été spécifié pour /nick.");
+            console.error("Error: No nickname specified for /nick.");
             return;
           }
           if (socket) {
@@ -185,25 +187,14 @@ function App() {
           }
           break;
 
-        case '/users':
-          {
-            const channelToList = arg || selectedChannel;
-            if (!channelToList) {
-              console.error("Aucun canal spécifié ni sélectionné pour /users.");
-              break;
-            }
-            socket.emit("listUsersInChannel", { name: channelToList });
-          }
-          break;
-
         case '/msg':
           if (!arg) {
-            console.error("Erreur : /msg <destinataire> <message>.");
+            console.error("Error: /msg <recipient> <message>.");
             return;
           }
           const messageContent = parts.slice(2).join(' ');
           if (!messageContent) {
-            console.error("Erreur : Aucun message spécifié pour /msg.");
+            console.error("Error: No message specified for /msg.");
             return;
           }
           if (socket) {
@@ -211,10 +202,10 @@ function App() {
           }
           break;
 
-        default:
-          console.log("Commande inconnue :", cmd);
-          break;
-      }
+          default:
+            console.log("Unknown command:", cmd);
+            break;
+        }
     } else {
       if (fullInput.trim() && socket && selectedChannel) {
         socket.emit('sendMessage', {
@@ -223,7 +214,7 @@ function App() {
           channel: selectedChannel,
         });
       } else if (!selectedChannel) {
-        console.error("Erreur : Aucun canal sélectionné pour envoyer le message.");
+        console.error("Error: No channel selected to send the message.");
       }
     }
 
