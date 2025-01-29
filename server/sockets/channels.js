@@ -1,4 +1,5 @@
 const Channel = require('../models/Channel');
+const Message = require('../models/Message');
 
 let listUsersConnectChannel = [];
 
@@ -67,11 +68,114 @@ const channelManager = async (socket, io, connectedUsers) => {
     }
   }
 
+  socket.on('privateMessage', async (data) => {
+    try{
+      const {to, content} = data;
+    const userDest = connectedUsers.find(u => u.name === to);
+
+    if (!userDest) {
+      socket.emit('errors', { code: 404, error: 'Not Found: User not found.' });
+      return;
+    }
+
+    const sender = connectedUsers.find(u => u.id === socket.id);
+    const fromName = sender.name;
+
+    const channelName = to + ' ' + fromName;
+
+  // enzo: truc pour créer channel
+  console.log("truc pour créer channel");
+    try{
+      const exist = await Channel.findOne({ name: channelName });
+      if (!exist) {
+        const newChannel = new Channel({ name: channelName, isPrivate: true });
+        await newChannel.save();
+        listUsersConnectChannel.push({
+          nameChannel: channelName,
+          users: []
+        });
+        io.emit('newChannel', newChannel);
+      } else {
+        socket.emit('errors', { code: 409, error: "Conflict: Channel already exists." });
+      }
+    }catch(err){
+      console.error('Error creating channel:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to create channel." });
+    }
+    // enzo: truc pour que l'envoyeur join son channel
+    console.log("truc pour que l'envoyeur join son channel")
+    try{
+      const check = await Channel.findOne({ name: channelName });
+      if (!check) {
+        socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+        return;
+      } 
+
+      const user = connectedUsers.find((u) => u.id === socket.id);
+      const username = user ? user.name : `user${socket.id}`;
+
+      if (!verifUserOnListChannel(username, channelName)) {
+        socket.join(channelName);
+        updateListChannel(channelName, socket, io, connectedUsers);
+      } else {
+        socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+      }
+    }catch(err){
+      console.error('Error retrieving channels:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to retrieve channels." });
+    }
+    console.log("le truc de l'envoyeur :");
+    console.log(socket.rooms);
+    // enzo: truc pour que le receveur join le channel
+    console.log("truc pour que le receveur join le channel")
+    try{
+    const check = await Channel.findOne({ name: channelName });
+    if (!check) {
+      socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+      return;
+    } 
+
+      const user = connectedUsers.find((u) => u.id === userDest.id);
+      const username = user ? user.name : `user${userDest.id}`;
+      const targetSocket = io.sockets.sockets.get(userDest.id);
+
+      if (!verifUserOnListChannel(username, channelName)) {
+        targetSocket.join(channelName);
+        updateListChannel(channelName, userDest, io, connectedUsers);
+      } else {
+        socket.emit('errors', { code: 409, error: "Conflict: You are already in this channel." });
+      }
+    }catch(err){
+      console.error('Error retrieving channels:', err);
+      socket.emit('errors', { code: 500, error: "Internal server error: Unable to retrieve channels." });
+    }
+    console.log("le truc du receveur :");
+    console.log(io.sockets.adapter.sids.get(userDest.id));
+    // enzo: stockage du message
+    console.log("stockage du message")
+    try {    
+          const newMessage = new Message({
+            userId: socket.id,
+            content: content,
+            channel: channelName,
+          });
+          await newMessage.save();
+
+        } catch (err) {
+          console.error("Erreur lors de l'enregistrement du message :", err);
+        }
+    }catch(err){
+      console.error(err);
+      socket.emit('errors', {code: 415, error: err});
+    }
+
+  });
+
   socket.on('createChannel', async (data) => {
     try {
       const exist = await Channel.findOne({ name: data.name });
       if (!exist) {
-        const newChannel = new Channel({ name: data.name });
+        const newChannel = new Channel({ name: data.name, isPrivate: data.isPrivate });
         await newChannel.save();
 
         listUsersConnectChannel.push({

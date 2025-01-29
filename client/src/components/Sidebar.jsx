@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import logo from '../assets/Logo.png';
+import renameIcon from '../assets/Rename.png';
+import showIcon from '../assets/Show.png';
+import createIcon from '../assets/Create.png';
+import deleteIcon from '../assets/Delete.png';
 
-function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel }) {
+function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel, onShowChannelList }) {
   const [showInput, setShowInput] = useState(false);
   const [actionType, setActionType] = useState('');
   const [channelName, setChannelName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [showRenameInput, setShowRenameInput] = useState(false);
 
   const handleButtonClick = (type) => {
     setActionType(type);
@@ -16,6 +22,14 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       onCommand(`/${actionType} ${channelName}`);
       setChannelName('');
       setShowInput(false);
+    }
+  };
+
+  const handleRenameSubmit = () => {
+    if (nickname.trim()) {
+      onCommand(`/nick ${nickname}`);
+      setNickname('');
+      setShowRenameInput(false);
     }
   };
 
@@ -36,8 +50,34 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
       </div>
 
       <h2>Actions</h2>
-      <button onClick={() => handleButtonClick('create')}>Create Channel</button>
-      <button onClick={() => handleButtonClick('delete')}>Delete Channel</button>
+      <button onClick={() => handleButtonClick('create')}>
+        <img src={createIcon} alt="Create Icon" className="icon" /> Create Channel
+      </button>
+      <button onClick={() => handleButtonClick('delete')}>
+        <img src={deleteIcon} alt="Delete Icon" className="icon" /> Delete Channel
+      </button>
+      <button onClick={() => setShowRenameInput(true)}>
+        <img src={renameIcon} alt="Rename Icon" className="icon" /> Rename
+      </button>
+      <button onClick={() => onCommand('/list')}>
+        <img src={showIcon} alt="Show Icon" className="icon" /> Show Channels
+      </button>
+
+      {showRenameInput && (
+        <div className="input-overlay">
+          <div className="input-container">
+            <h3>Rename</h3>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Enter new nickname"
+            />
+            <button onClick={handleRenameSubmit}>Submit</button>
+            <button onClick={() => setShowRenameInput(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <h1>Users</h1>
       <ul>

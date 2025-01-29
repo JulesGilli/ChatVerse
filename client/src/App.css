@@ -64,12 +64,12 @@ body {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: #DA6167;
+  background: #3d3d3d;
   border-radius: 4px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-  background: #e14b51;
+  background: #2b2b2b;
 }
 
 .sidebar button {
@@ -79,7 +79,7 @@ body {
   margin: 5px 0;
   padding: 10px;
   width: 100%;
-  background-color: #DA6167;
+  background-color: #494949;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -88,7 +88,7 @@ body {
 }
 
 .sidebar button:hover {
-  background-color: #e14b51;
+  background-color: #DA6167;
 }
 
 .channel-list-window {
@@ -345,7 +345,7 @@ body {
 }
 
 .input-container input {
-  width: 100%;
+  width: 80%;
   padding: 10px;
   margin-bottom: 10px;
   border: none;
@@ -381,7 +381,12 @@ body {
   background-color: #424242;
 }
 
-
+.icon {
+  width: 24px;
+  height: 28px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
 
 .main-content {
   flex: 1;

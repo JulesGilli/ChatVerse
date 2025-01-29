@@ -5,6 +5,11 @@ const ChannelSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true
+    },
+
+    isPrivate: {
+        type: Boolean,
+        required: true
     }
 
 }, {versionKey: false});
