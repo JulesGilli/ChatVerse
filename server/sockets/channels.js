@@ -248,7 +248,9 @@ const channelManager = async (socket, io, connectedUsers) => {
     if (data.name) {
       socket.leave(data.name);
       leaveUserListForChannel(data.name, socket, io, connectedUsers);
-      socket.broadcast.to(data.name).emit('notifChannel', user.name + " quit the channel " + channelName);
+      const user = connectedUsers.find((u) => u.id === socket.id);
+      const username = user ? user.name : `user${socket.id}`;
+      socket.broadcast.to(data.name).emit('notifChannel', user.name + " quit the channel " + data.name);
     }
   });
 
