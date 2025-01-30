@@ -67,5 +67,9 @@ export function createSocketConnection(
     console.log('[CLIENT] Message privé reçu de :', data.from, ':', data.content);
   });
 
+  newSocket.on('notifChannel', (data) => {
+    console.log(data);
+  });
+
   return newSocket;
 }
