@@ -9,7 +9,8 @@ const ChannelSchema = new mongoose.Schema({
 
     isPrivate: {
         type: Boolean,
-        required: true
+        required: true,
+        default: false 
     }
 
 }, {versionKey: false});

@@ -49,19 +49,74 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+  
+    socket.on('privateChannelCreated', (data) => {
+      const { channelName } = data;
+  
+      setJoinedChannels((prev) => {
+        if (prev.find((ch) => ch.name === channelName)) {
+          return prev;
+        }
+        return [
+          ...prev,
+          { name: channelName, messages: [], unreadCount: 0 }
+        ];
+      });
+    });
+  
+    return () => {
+      socket.off('privateChannelCreated');
+    };
+  }, [socket, setJoinedChannels]);
+  
+
   const handleShowChannelList = () => {
     setShowChannelList(true);
   };
 
   const handleNewMessage = (message) => {
-    setJoinedChannels((prev) =>
-      prev.map((chan) =>
-        chan.name === message.channel
-          ? { ...chan, messages: [...chan.messages, message] }
-          : chan
-      )
-    );
+    setJoinedChannels((prev) => {
+      let foundChannel = false;
+  
+      const updated = prev.map((chan) => {
+        if (chan.name === message.channel) {
+          foundChannel = true;
+  
+          const newMessages = [...chan.messages, message];
+  
+          let newUnread = chan.unreadCount;
+          if (selectedChannel !== message.channel) {
+            newUnread += 1;
+          }
+  
+          return {
+            ...chan,
+            messages: newMessages,
+            unreadCount: newUnread,
+          };
+        }
+        return chan;
+      });
+  
+      if (!foundChannel) {
+        updated.push({
+          name: message.channel,
+          messages: [message],
+          unreadCount: selectedChannel === message.channel ? 0 : 1,
+        });
+      }
+      return updated;
+    });
+  
+    if (selectedChannel !== message.channel) {
+      addNotification(
+        `Nouveau message dans #${message.channel} de ${message.userName}`
+      );
+    }
   };
+  
 
   const onJoinChannel = (channelName) => {
     setJoinedChannels((prev) => {
@@ -245,6 +300,20 @@ function App() {
     }
   };
 
+  function handleSelectChannel(channelName) {
+    setSelectedChannel(channelName);
+  
+    setJoinedChannels((prev) =>
+      prev.map((chan) => {
+        if (chan.name === channelName) {
+          return { ...chan, unreadCount: 0 };
+        }
+        return chan;
+      })
+    );
+  }
+  
+
   return (
     <div className="app-container">
       <div className="toast-container">
@@ -263,6 +332,7 @@ function App() {
         currentFail={currentFail}
         selectedChannel={selectedChannel}
         onShowChannelList={handleShowChannelList}
+        onSelectChannel={handleSelectChannel}
       />
       <div className="main-content">
         {showChannelList ? (

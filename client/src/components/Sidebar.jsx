@@ -33,14 +33,11 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
     }
   };
 
-  const handleChannelClick = (channel) => {
-    if (selectedChannel === channel) {
-      return;
-    }
-    if (joinedChannels.some((chan) => chan.name === channel)) {
-      onCommand(`/select ${channel}`);
-    }
+  const handleChannelClick = (channelName) => {
+    if (selectedChannel === channelName) return;
+    onSelectChannel(channelName);
   };
+
 
   return (
     <div className="sidebar">
@@ -98,9 +95,28 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
                 key={index}
                 onClick={() => handleChannelClick(channel.name)}
                 className={isSelected ? 'selected-channel' : ''}
+                style={{ display: 'flex', justifyContent: 'space-between' }}
               >
-                {channel.name}
+                <span>{channel.name}</span>
+                {channel.unreadCount > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '8px',
+                    }}
+                  >
+                    {channel.unreadCount}
+                  </span>
+                )}
               </li>
+
             );
           })
         ) : (
