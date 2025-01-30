@@ -2,24 +2,29 @@ import { io } from 'socket.io-client';
 
 export function createSocketConnection(
   setCurrentUserId,
-  setUsers,
+  onUpdateUsers,             
   handleNewMessageCallback,
-  onListChannels,  
-  setError,    
-  addNotification ,
-  handleChannelAction, 
+  onListChannels,
+  setError,
+  addNotification,
+  handleChannelAction,
   setChannelUsers,
-  setShowUserList   
+  setShowUserList
 ) {
-  const newSocket = io('http://localhost:5050');
-  
-  newSocket.on('connect', () => {
-    setCurrentUserId(newSocket.id);
-    console.log(`Connected with ID: ${newSocket.id}`);
+  const newSocket = io('http://localhost:5050', {
   });
 
-  newSocket.on('updateUsers', (data) => {
-    setUsers(data);
+  newSocket.on('connect', () => {
+    const myId = newSocket.id;
+    console.log('[CLIENT] Socket connect =>', myId);
+
+    setCurrentUserId(myId);
+  });
+
+  newSocket.on('updateUsers', (usersArray) => {
+    setTimeout(() => {
+      onUpdateUsers(usersArray);
+    }, 30);
   });
 
   newSocket.on('newMessage', (newMessage) => {
@@ -37,36 +42,29 @@ export function createSocketConnection(
     const errorCode = data.code ? ` (Code: ${data.code})` : '';
     setError(`${errorMessage}${errorCode}`);
     if (addNotification) {
-      addNotification(`Error${errorCode}: ${errorMessage}`); 
+      addNotification(`Error${errorCode}: ${errorMessage}`);
     }
   });
-  
-    newSocket.on('usersInChannel', (users) => {
-      setChannelUsers(users);
-      setShowUserList(true);
-    });
-  
-    newSocket.on('newChannel', (data) => {
-      handleChannelAction('create', data.name);
-    });
-  
-    newSocket.on('deleteChannel', (data) => {
-      handleChannelAction('delete', data.name);
-    });
-  
-    newSocket.on('nicknameChanged', () => {
-      handleChannelAction('rename');
-    });
-  
-    newSocket.on('privateMessage', (data) => {
-      console.log('Message privé reçu de :', data.from, ':', data.content);
-    });
 
   newSocket.on('usersInChannel', (users) => {
-    console.log('Utilisateurs dans ce canal :', users);
+    setChannelUsers(users);
+    setShowUserList(true);
   });
+
+  newSocket.on('newChannel', (data) => {
+    handleChannelAction('create', data.name);
+  });
+
+  newSocket.on('deleteChannel', (data) => {
+    handleChannelAction('delete', data.name);
+  });
+
+  newSocket.on('nicknameChanged', () => {
+    handleChannelAction('rename');
+  });
+
   newSocket.on('privateMessage', (data) => {
-    console.log('Message privé reçu de :', data.from, ':', data.content);
+    console.log('[CLIENT] Message privé reçu de :', data.from, ':', data.content);
   });
 
   return newSocket;

@@ -159,9 +159,12 @@ const channelManager = async (socket, io, connectedUsers) => {
       let channelList;
       if (data && data.filter) {
         const regexFilter = new RegExp(`^${data.filter}`, 'i');
-        channelList = await Channel.find({ name: { $regex: regexFilter } });
+        channelList = await Channel.find({
+          isPrivate: false,
+          name: { $regex: regexFilter },
+        });
       } else {
-        channelList = await Channel.find({});
+        channelList = await Channel.find({ isPrivate: false });
       }
       socket.emit('listChannels', channelList);
     } catch (err) {
@@ -172,6 +175,7 @@ const channelManager = async (socket, io, connectedUsers) => {
       });
     }
   });
+  
 
   socket.on('joinChannel', async (data, callback) => {
     try {

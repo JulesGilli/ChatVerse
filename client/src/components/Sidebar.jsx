@@ -5,13 +5,40 @@ import showIcon from '../assets/Show.png';
 import createIcon from '../assets/Create.png';
 import deleteIcon from '../assets/Delete.png';
 
-function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChannel, onShowChannelList }) {
+// ---------------------------------------------------
+// Fonctions utilitaires
+// ---------------------------------------------------
+function isPrivateChannel(channelName) {
+  return channelName.includes('_');
+}
+
+function getPrivatePartnerName(channelName, myUserName) {
+  const parts = channelName.split('_');
+  if (parts.length !== 2) return channelName; 
+
+  const [a, b] = parts;
+  return a === myUserName ? b : a;
+}
+
+function Sidebar({
+  users, 
+  myUserName,           
+  joinedChannels,   
+  onCommand,        
+  currentFail,      
+  selectedChannel,  
+  onShowChannelList,
+  onSelectChannel,  
+}) {
   const [showInput, setShowInput] = useState(false);
   const [actionType, setActionType] = useState('');
   const [channelName, setChannelName] = useState('');
   const [nickname, setNickname] = useState('');
   const [showRenameInput, setShowRenameInput] = useState(false);
 
+  // ---------------------------------------------------
+  // GESTION DES ACTIONS
+  // ---------------------------------------------------
   const handleButtonClick = (type) => {
     setActionType(type);
     setShowInput(true);
@@ -38,7 +65,15 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
     onSelectChannel(channelName);
   };
 
+  // ---------------------------------------------------
+  // SÉPARER PUBLIC / PRIVÉ
+  // ---------------------------------------------------
+  const publicChannels = joinedChannels.filter((chan) => !isPrivateChannel(chan.name));
+  const privateChannels = joinedChannels.filter((chan) => isPrivateChannel(chan.name));
 
+  // ---------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -76,19 +111,57 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
         </div>
       )}
 
-      <h1>Users</h1>
+      {/* ============================== */}
+      {/* SECTION : Channels privés */}
+      {/* ============================== */}
+      <h1>Users (Private)</h1>
       <ul>
-        {users.length > 0 ? (
-          users.map((user, index) => <li key={index}>{user.name}</li>)
+        {privateChannels.length > 0 ? (
+          privateChannels.map((channel, index) => {
+            const isSelected = channel.name === selectedChannel;
+
+            const partner = getPrivatePartnerName(channel.name, myUserName);
+
+            return (
+              <li
+                key={index}
+                onClick={() => handleChannelClick(channel.name)}
+                className={isSelected ? 'selected-channel' : ''}
+                style={{ display: 'flex', justifyContent: 'space-between' }}
+              >
+                <span>{partner}</span>
+                {channel.unreadCount > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '8px',
+                    }}
+                  >
+                    {channel.unreadCount}
+                  </span>
+                )}
+              </li>
+            );
+          })
         ) : (
-          <li className="empty-list">No users connected</li>
+          <li className="empty-list">No private channels</li>
         )}
       </ul>
 
+      {/* ============================== */}
+      {/* SECTION : Channels publics */}
+      {/* ============================== */}
       <h1>My Channels</h1>
       <ul>
-        {joinedChannels.length > 0 ? (
-          joinedChannels.map((channel, index) => {
+        {publicChannels.length > 0 ? (
+          publicChannels.map((channel, index) => {
             const isSelected = channel.name === selectedChannel;
             return (
               <li
@@ -116,7 +189,6 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
                   </span>
                 )}
               </li>
-
             );
           })
         ) : (
@@ -124,6 +196,9 @@ function Sidebar({ users, joinedChannels, onCommand, currentFail, selectedChanne
         )}
       </ul>
 
+      {/* ============================== */}
+      {/* Overlay creation / delete Channel */}
+      {/* ============================== */}
       {showInput && (
         <div className="input-overlay">
           <div className="input-container">
