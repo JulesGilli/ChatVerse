@@ -10,116 +10,104 @@ const messageManager = require('./sockets/messages');
 const connectionManager = require('./sockets/connection');
 
 const DB_URI = process.env.ATLAS_URI;
+const TEST_PORT = 3001;
 
-describe('Test des sockets - Channel, Message, et Connection Manager', () => {
-  let server, ioServer;
-  const connectedUsers = [];
+describe('Socket Features Test Suite', () => {
+  let httpServer, ioServer;
+  let connectedUsers = [];
 
-  // Increase the global timeout for hooks and tests
-  jest.setTimeout(30000);
+  const connectClient = () => client(`http://localhost:${TEST_PORT}`, {
+    transports: ['websocket'],
+    forceNew: true
+  });
 
   beforeAll(async () => {
-    await mongoose.connect(DB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('Connecté à MongoDB pour les tests');
-
-    const httpServer = http.createServer();
+    await mongoose.connect(DB_URI);
+    
+    httpServer = http.createServer();
     ioServer = io(httpServer);
+    
     ioServer.on('connection', (socket) => {
+      connectionManager(socket, ioServer, connectedUsers);
       channelManager(socket, ioServer, connectedUsers);
       messageManager(socket, ioServer, connectedUsers);
-      connectionManager(socket, ioServer, connectedUsers);
     });
-    // Store the server instance to close later
-    server = await new Promise((resolve) => httpServer.listen(3000, resolve));
+
+    await new Promise(resolve => httpServer.listen(TEST_PORT, resolve));
   });
 
   afterAll(async () => {
-    ioServer.close();
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise(resolve => httpServer.close(resolve));
     await mongoose.connection.close();
   });
 
-  afterEach(async () => {
-    // ATTENTION: These operations clear your collections from your production DB!
-    await Message.deleteMany({});
-    await Channel.deleteMany({});
-    ioServer.sockets.sockets.forEach((socket) => socket.disconnect(true));
+  beforeEach(async () => {
+    connectedUsers = [];
+    await Channel.deleteMany();
+    await Message.deleteMany();
   });
 
-  test('Doit envoyer et recevoir un message dans un canal et sauvegarder en DB', (done) => {
-    const testClient = client('http://localhost:3000', {
-      transports: ['websocket'],
-      forceNew: true,
-    });
-    testClient.on('connect', () => {
-      testClient.emit('sendMessage', {
-        content: 'Hello, World!',
-        channel: 'general',
-      });
-      testClient.on('newMessage', (message) => {
-        try {
-          expect(message.content).toBe('Hello, World!');
-          expect(message.channel).toBe('general');
-          // Wait briefly to allow the DB insertion to complete
-          setTimeout(async () => {
-            try {
-              const savedMessage = await Message.findOne({ content: 'Hello, World!' });
-              expect(savedMessage).toBeTruthy();
-              expect(savedMessage.content).toBe('Hello, World!');
-              testClient.disconnect();
-              done();
-            } catch (dbErr) {
-              testClient.disconnect();
-              done(dbErr);
-            }
-          }, 500);
-        } catch (err) {
-          testClient.disconnect();
-          done(err);
-        }
-      });
-    });
-  }, 10000);
+  afterEach(async () => {
+    const sockets = await ioServer.fetchSockets();
+    await Promise.all(sockets.map(socket => socket.disconnect(true)));
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
 
-  test("Doit récupérer l'historique des messages d'un canal", (done) => {
-    const testClient = client('http://localhost:3000', {
-      transports: ['websocket'],
-      forceNew: true,
-    });
-    const channelName = 'general';
-    const userName = 'user1';
-    const messageData = {
-      content: 'Test message history',
-      channel: channelName,
-    };
-    new Message({
-      userId: 'user1',
-      userName,
-      content: messageData.content,
-      channel: messageData.channel,
-    })
-      .save()
-      .then(() => {
-        testClient.on('connect', () => {
-          testClient.emit('getMessageHistory', { channel: channelName });
-          testClient.on('messageHistory', (messages) => {
-            try {
-              expect(messages.length).toBeGreaterThan(0);
-              expect(messages[0].content).toBe(messageData.content);
-              testClient.disconnect();
-              done();
-            } catch (error) {
-              testClient.disconnect();
-              done(error);
-            }
-          });
-        });
-      })
-      .catch((err) => done(err));
-  }, 10000);
+  describe('Core Functionality', () => {
+    test('Full Message Flow', async () => {
+      const client = connectClient();
+      await new Promise(resolve => client.on('connect', resolve));
+      
+      await new Channel({ name: 'general', isPrivate: false }).save();
+      
+      const joinResponse = await new Promise(resolve => 
+        client.emit('joinChannel', { name: 'general' }, resolve)
+      );
+      expect(joinResponse.success).toBe(true);
 
-  
+      const messagePromise = new Promise(resolve => client.on('newMessage', resolve));
+      client.emit('sendMessage', { content: 'Test', channel: 'general' });
+      
+      const message = await messagePromise;
+      expect(message.content).toBe('Test');
+      
+      const dbMessage = await Message.findOne({ content: 'Test' });
+      expect(dbMessage).toBeTruthy();
+
+      client.disconnect();
+    });
+
+    test('Error Handling', async () => {
+      const client = connectClient();
+      await new Promise(resolve => client.on('connect', resolve));
+
+      await new Channel({ name: 'existing', isPrivate: false }).save();
+      const errorPromise = new Promise(resolve => client.on('errors', resolve));
+      client.emit('createChannel', { name: 'existing', isPrivate: false });
+      
+      const error = await errorPromise;
+      expect(error.error).toContain('already exists');
+
+      client.disconnect();
+    });
+
+    test('User Presence Tracking', async () => {
+      const client1 = connectClient();
+      const client2 = connectClient();
+      
+      await Promise.all([
+        new Promise(resolve => client1.on('connect', resolve)),
+        new Promise(resolve => client2.on('connect', resolve))
+      ]);
+
+      const initialUsers = await new Promise(resolve => client1.on('updateUsers', resolve));
+      expect(initialUsers.length).toBe(2);
+
+      client2.disconnect();
+      const finalUsers = await new Promise(resolve => client1.on('updateUsers', resolve));
+      expect(finalUsers.length).toBe(1);
+
+      client1.disconnect();
+    });
+  });
 });
