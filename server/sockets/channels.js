@@ -68,38 +68,60 @@ const channelManager = async (socket, io, connectedUsers) => {
     }
   }
 
-  socket.on('privateMessage', async ({ to, content }) => {
+  socket.on('privateMessage', async (data) => {
     try {
-      const sender = connectedUsers.find(u => u.id === socket.id);
-      const recipient = connectedUsers.find(u => u.name === to);
-
-      if (!sender || !recipient) {
-        return socket.emit('errors', { error: 'User not found' });
+      const { to, content } = data;
+  
+      const sender = connectedUsers.find((u) => u.id === socket.id);
+      const userDest = connectedUsers.find((u) => u.name === to);
+  
+      if (!sender) {
+        socket.emit('errors', { error: "Vous (sender) n'existez pas dans connectedUsers..." });
+        return;
       }
-
-      const channelName = [sender.name, recipient.name].sort().join('_');
-      
-      let channel = await Channel.findOne({ name: channelName });
-      if (!channel) {
-        channel = new Channel({ name: channelName, isPrivate: true });
-        await channel.save();
-        io.emit('privateChannelCreated', { channelName });
+      if (!userDest) {
+        socket.emit('errors', { error: `Impossible de trouver le destinataire : ${to}` });
+        return;
       }
-
-      const message = new Message({
+  
+      const channelName = [sender.name, userDest.name].sort().join('_');
+  
+      let existingChannel = await Channel.findOne({ name: channelName });
+      if (!existingChannel) {
+        existingChannel = new Channel({
+          name: channelName,
+          isPrivate: true,
+        });
+        await existingChannel.save();
+  
+        listUsersConnectChannel.push({
+          nameChannel: channelName,
+          users: [],
+        });
+        io.emit('newChannel', existingChannel);
+      }
+  
+      socket.join(channelName);
+      const destSocket = io.sockets.sockets.get(userDest.id);
+      if (destSocket) {
+        destSocket.join(channelName);
+      }
+  
+      io.to(socket.id).emit('privateChannelCreated', { channelName });
+      io.to(userDest.id).emit('privateChannelCreated', { channelName });
+  
+      const newMessage = new Message({
         userId: socket.id,
-        userName: sender.name,
-        content,
-        channel: channelName
+        userName: sender.name,  
+        content: content,
+        channel: channelName,
       });
-      await message.save();
-
-      io.to(recipient.id).emit('newMessage', message);
-      io.to(socket.id).emit('messageSentConfirmation', message);
-
+      await newMessage.save();
+  
+      io.to(channelName).emit('newMessage', newMessage);
     } catch (err) {
-      console.error('Private message error:', err);
-      socket.emit('errors', { code: 500, error: 'Internal server error' });
+      console.error("Erreur message privé :", err);
+      socket.emit('errors', { code: 500, error: "Internal Server Error" });
     }
   });
   

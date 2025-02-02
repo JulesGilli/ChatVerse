@@ -1,50 +1,61 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+
 import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import ChannelListWindow from './components/ChannelListWindow.jsx';
 import UserListWindow from './components/UserListWindow.jsx';
 import CommandInput from './components/CommandInput.jsx';
 import ToastNotification from './components/ToastNotification.jsx';
+
 import { createSocketConnection } from './socketService';
 
 function App() {
+  // =======================
+  // States
+  // =======================
   const [socket, setSocket] = useState(null);
   const [currentUserId, setCurrentUserId] = useState('');
   const [users, setUsers] = useState([]);
+
   const [channels, setChannels] = useState([]);
   const [showChannelList, setShowChannelList] = useState(false);
+
   const [joinedChannels, setJoinedChannels] = useState([]);
   const [selectedChannel, setSelectedChannel] = useState(null);
+
   const [channelUsers, setChannelUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
+
   const [notifications, setNotifications] = useState([]);
   const [currentFail, setError] = useState('');
+
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+
   const [myUserName, setMyUserName] = useState('');
 
-  const currentUserIdRef = useRef(currentUserId);
-  const selectedChannelRef = useRef(selectedChannel);
-
-  useEffect(() => {
-    currentUserIdRef.current = currentUserId;
-  }, [currentUserId]);
-
-  useEffect(() => {
-    selectedChannelRef.current = selectedChannel;
-  }, [selectedChannel]);
-
   function onUpdateUsers(newUsers) {
+    console.log("== [CLIENT] updateUsers ==", newUsers);
+    console.log("== currentUserId ==", currentUserId);
+  
     setUsers(newUsers);
     const me = newUsers.find((u) => u.id === currentUserId);
-    if (me) setMyUserName(me.name);
+    if (me) {
+      console.log("== found me ==", me);
+      setMyUserName(me.name);
+    } else {
+      console.log("== Did NOT find me in newUsers ==");
+    }
   }
 
+  // =======================
+  // useEffect: Socket init
+  // =======================
   useEffect(() => {
     const newSocket = createSocketConnection(
       setCurrentUserId,
-      onUpdateUsers,
+      onUpdateUsers, 
       handleNewMessage,
       handleListChannels,
       setError,
@@ -53,49 +64,76 @@ function App() {
       setChannelUsers,
       setShowUserList
     );
-
-    newSocket.on('messageSentConfirmation', (message) => {
-      setJoinedChannels(prev => prev.map(chan => 
-        chan.name === message.channel 
-          ? { ...chan, messages: [...chan.messages, message] }
-          : chan
-      ));
-    });
-
     setSocket(newSocket);
-    return () => newSocket.disconnect();
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, []);
 
+  // =======================
+  // useEffect: privateChannelCreated
+  // =======================
   useEffect(() => {
     if (!socket) return;
-    
-    socket.on('privateChannelCreated', ({ channelName }) => {
-      setJoinedChannels(prev => prev.some(c => c.name === channelName) 
-        ? prev 
-        : [...prev, { name: channelName, messages: [], unreadCount: 0 }]
-      );
-    });
 
-    return () => socket.off('privateChannelCreated');
+    socket.on('privateChannelCreated', (data) => {
+      const { channelName } = data;
+      setJoinedChannels((prev) => {
+        if (prev.find((ch) => ch.name === channelName)) {
+          return prev;
+        }
+        return [...prev, { name: channelName, messages: [], unreadCount: 0 }];
+      });
+    });
+    
+
+    return () => {
+      socket.off('privateChannelCreated');
+    };
   }, [socket]);
 
+  // =======================
+  // Callbacks Socket
+  // =======================
   function handleNewMessage(message) {
-    const isCurrentUser = message.userId === currentUserIdRef.current;
-    const isSelectedChannel = selectedChannelRef.current === message.channel;
+    setJoinedChannels((prev) => {
+      let foundChannel = false;
 
-    setJoinedChannels(prev => prev.map(chan => {
-      if (chan.name !== message.channel) return chan;
-      
-      return isSelectedChannel 
-        ? { ...chan, messages: [...chan.messages, message], unreadCount: 0 }
-        : { ...chan, 
-            messages: [...chan.messages, message], 
-            unreadCount: isCurrentUser ? chan.unreadCount : chan.unreadCount + 1 
+      const updated = prev.map((chan) => {
+        if (chan.name === message.channel) {
+          foundChannel = true;
+
+          const newMessages = [...chan.messages, message];
+
+          let newUnread = chan.unreadCount;
+          if (message.userId !== currentUserId && selectedChannel !== message.channel) {
+            newUnread += 1;
+          }
+
+          return {
+            ...chan,
+            messages: newMessages,
+            unreadCount: newUnread,
           };
-    }));
+        }
+        return chan;
+      });
 
-    if (!isCurrentUser && !isSelectedChannel) {
-      addNotification(`New message in #${message.channel} from ${message.userName}`);
+      if (!foundChannel) {
+        updated.push({
+          name: message.channel,
+          messages: [message],
+          unreadCount: 
+          message.userId !== currentUserId && selectedChannel !== message.channel ? 1 : 0,
+
+        });
+      }
+      return updated;
+    });
+
+    if (message.userId !== currentUserId && selectedChannel !== message.channel) {
+      addNotification(`Nouveau message dans #${message.channel} de ${message.userName}`);
     }
   }
 
@@ -104,6 +142,9 @@ function App() {
     setShowChannelList(true);
   }
 
+  // =======================
+  // Outils / Gestions
+  // =======================
   function addNotification(message) {
     setNotifications((prev) => [...prev, { id: Date.now(), message }]);
   }
@@ -133,6 +174,9 @@ function App() {
     }
   }
 
+  // =======================
+  // Commandes saisies
+  // =======================
   function handleUserCommand(fullInput) {
     if (!socket) return;
 
@@ -143,13 +187,25 @@ function App() {
     if (cmd.startsWith('/')) {
       switch (cmd) {
         case '/create':
-          if (arg) socket.emit('createChannel', { name: arg });
+          if (arg) {
+            socket.emit('createChannel', { name: arg });
+          } else {
+            console.error('Error: no channel name after /create');
+          }
           break;
+
         case '/join':
-          if (arg) socket.emit('joinChannel', { name: arg }, (response) => {
-            if (!response?.error) onJoinChannel(arg);
-          });
+          if (arg) {
+            socket.emit('joinChannel', { name: arg }, (response) => {
+              if (response?.error) {
+                addNotification(`Error: ${response.error}`);
+              } else {
+                onJoinChannel(arg);
+              }
+            });
+          }
           break;
+
         case '/quit':
           if (arg) {
             socket.emit('leaveChannel', { name: arg });
@@ -158,35 +214,66 @@ function App() {
             handleChannelAction('quit', arg);
           }
           break;
+
         case '/list':
           socket.emit('getChannels', { filter: arg }, (response) => {
-            if (!response?.error) {
+            if (response?.error) {
+              addNotification(`Error: ${response.error}`);
+            } else {
               setChannels(response?.channels || []);
               setShowChannelList(true);
             }
           });
           break;
+
         case '/select':
-          if (arg) setSelectedChannel(arg);
-          break;
-        case '/users':
-          const channelToList = arg || selectedChannel;
-          if (channelToList) socket.emit('listUsersInChannel', { name: channelToList });
-          break;
-        case '/delete':
-          if (arg) socket.emit('deleteChannel', { name: arg });
-          break;
-        case '/nick':
-          if (arg) socket.emit('changeNickname', { name: arg });
-          break;
-        case '/msg':
           if (arg) {
-            const messageContent = parts.slice(2).join(' ');
-            if (messageContent) socket.emit('privateMessage', { to: arg, content: messageContent });
+            setSelectedChannel(arg);
+            handleChannelAction('select', arg);
           }
           break;
+
+        case '/users':
+          {
+            const channelToList = arg || selectedChannel;
+            if (!channelToList) {
+              console.error('Error: No channel specified or selected for /users.');
+              break;
+            }
+            socket.emit('listUsersInChannel', { name: channelToList });
+          }
+          break;
+
+        case '/delete':
+          if (arg) {
+            socket.emit('deleteChannel', { name: arg });
+          }
+          break;
+
+        case '/nick':
+          if (!arg) {
+            console.error('Error: No nickname specified for /nick.');
+            return;
+          }
+          socket.emit('changeNickname', { name: arg });
+          break;
+
+        case '/msg':
+          if (!arg) {
+            console.error('Error: /msg <recipient> <message>.');
+            return;
+          }
+          const messageContent = parts.slice(2).join(' ');
+          if (!messageContent) {
+            console.error('Error: No message specified for /msg.');
+            return;
+          }
+          socket.emit('privateMessage', { to: arg, content: messageContent });
+          break;
+
         default:
           console.log('Unknown command:', cmd);
+          break;
       }
     } else {
       if (fullInput.trim() && selectedChannel) {
@@ -195,35 +282,63 @@ function App() {
           content: fullInput.trim(),
           channel: selectedChannel,
         });
+      } else if (!selectedChannel) {
+        console.error('Error: No channel selected to send the message.');
       }
     }
+
     setInput('');
     setSuggestions([]);
   }
 
   function onJoinChannel(channelName) {
     setJoinedChannels((prev) => {
-      if (prev.some((c) => c.name === channelName)) return prev;
+      if (prev.some((c) => c.name === channelName)) {
+        return prev;
+      }
       return [...prev, { name: channelName, messages: [] }];
     });
     setSelectedChannel(channelName);
     handleChannelAction('join', channelName);
   }
 
+  // =======================
+  // Saisie “auto-suggest”
+  // =======================
   function handleInputChange(value) {
     setInput(value);
-    const COMMANDS = ['/create','/list','/join','/quit','/delete','/nick','/users','/msg'];
-    if (value.startsWith('/')) setSuggestions(COMMANDS.filter((c) => c.startsWith(value)));
-    else setSuggestions([]);
+
+    const COMMANDS = [
+      '/create', '/list', '/join', '/quit', '/delete',
+      '/nick', '/users', '/msg',
+    ];
+    if (value.startsWith('/')) {
+      const filtered = COMMANDS.filter((c) => c.startsWith(value));
+      setSuggestions(filtered);
+    } else {
+      setSuggestions([]);
+    }
   }
 
+  // =======================
+  // Sélection d’un channel 
+  // =======================
   function handleSelectChannel(channelName) {
     setSelectedChannel(channelName);
-    setJoinedChannels(prev => prev.map(chan => 
-      chan.name === channelName ? { ...chan, unreadCount: 0 } : chan
-    ));
+
+    setJoinedChannels((prev) =>
+      prev.map((chan) => {
+        if (chan.name === channelName) {
+          return { ...chan, unreadCount: 0 };
+        }
+        return chan;
+      })
+    );
   }
 
+  // =======================
+  // Affichage
+  // =======================
   return (
     <div className="app-container">
       <div className="toast-container">
@@ -262,7 +377,10 @@ function App() {
         ) : (
           <>
             <ChatWindow
-              messages={joinedChannels.find(chan => chan.name === selectedChannel)?.messages || []}
+              messages={
+                joinedChannels.find((chan) => chan.name === selectedChannel)
+                  ?.messages || []
+              }
               currentUserId={currentUserId}
               users={users}
             />
