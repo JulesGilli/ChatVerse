@@ -1,57 +1,113 @@
+require('dotenv').config();
 const io = require('socket.io');
 const http = require('http');
 const client = require('socket.io-client');
+const mongoose = require('mongoose');
+const Channel = require('./models/Channel');
+const Message = require('./models/Message');
+const channelManager = require('./sockets/channels');
+const messageManager = require('./sockets/messages');
+const connectionManager = require('./sockets/connection');
 
-describe('Test des sockets', () => {
-  let server, ioServer;
-  
-  beforeAll((done) => {
-    const httpServer = http.createServer();
+const DB_URI = process.env.ATLAS_URI;
+const TEST_PORT = 3001;
+
+describe('Socket Features Test Suite', () => {
+  let httpServer, ioServer;
+  let connectedUsers = [];
+
+  const connectClient = () => client(`http://localhost:${TEST_PORT}`, {
+    transports: ['websocket'],
+    forceNew: true
+  });
+
+  beforeAll(async () => {
+    await mongoose.connect(DB_URI);
+    
+    httpServer = http.createServer();
     ioServer = io(httpServer);
     
     ioServer.on('connection', (socket) => {
-      socket.on('message', (data, callback) => { 
-        callback(data);
-      });
-    });
-    
-    server = httpServer.listen(3000, done);
-  });
-
-  afterAll((done) => {
-    ioServer.close(); 
-    server.close(done);
-  });
-
-  afterEach((done) => {
-    ioServer.sockets.sockets.forEach(socket => socket.disconnect(true));
-    done();
-  });
-
-  test('Doit renvoyer le même message', (done) => {
-    const testClient = client('http://localhost:3000', {
-      transports: ['websocket'],
-      forceNew: true
+      connectionManager(socket, ioServer, connectedUsers);
+      channelManager(socket, ioServer, connectedUsers);
+      messageManager(socket, ioServer, connectedUsers);
     });
 
-    testClient.on('connect', () => {
-      testClient.emit('message', 'test', (response) => {
-        expect(response).toBe('test');
-        testClient.disconnect();
-        done();
-      });
-    });
+    await new Promise(resolve => httpServer.listen(TEST_PORT, resolve));
   });
 
-  test('Doit se déconnecter proprement', (done) => {
-    const testClient = client('http://localhost:3000');
-    
-    testClient.on('connect', () => {
-      testClient.disconnect();
-      setTimeout(() => { 
-        expect(testClient.connected).toBe(false);
-        done();
-      }, 100);
+  afterAll(async () => {
+    await new Promise(resolve => httpServer.close(resolve));
+    await mongoose.connection.close();
+  });
+
+  beforeEach(async () => {
+    connectedUsers = [];
+    await Channel.deleteMany();
+    await Message.deleteMany();
+  });
+
+  afterEach(async () => {
+    const sockets = await ioServer.fetchSockets();
+    await Promise.all(sockets.map(socket => socket.disconnect(true)));
+    await new Promise(resolve => setTimeout(resolve, 100));
+  });
+
+  describe('Core Functionality', () => {
+    test('Full Message Flow', async () => {
+      const client = connectClient();
+      await new Promise(resolve => client.on('connect', resolve));
+      
+      await new Channel({ name: 'general', isPrivate: false }).save();
+      
+      const joinResponse = await new Promise(resolve => 
+        client.emit('joinChannel', { name: 'general' }, resolve)
+      );
+      expect(joinResponse.success).toBe(true);
+
+      const messagePromise = new Promise(resolve => client.on('newMessage', resolve));
+      client.emit('sendMessage', { content: 'Test', channel: 'general' });
+      
+      const message = await messagePromise;
+      expect(message.content).toBe('Test');
+      
+      const dbMessage = await Message.findOne({ content: 'Test' });
+      expect(dbMessage).toBeTruthy();
+
+      client.disconnect();
+    });
+
+    test('Error Handling', async () => {
+      const client = connectClient();
+      await new Promise(resolve => client.on('connect', resolve));
+
+      await new Channel({ name: 'existing', isPrivate: false }).save();
+      const errorPromise = new Promise(resolve => client.on('errors', resolve));
+      client.emit('createChannel', { name: 'existing', isPrivate: false });
+      
+      const error = await errorPromise;
+      expect(error.error).toContain('already exists');
+
+      client.disconnect();
+    });
+
+    test('User Presence Tracking', async () => {
+      const client1 = connectClient();
+      const client2 = connectClient();
+      
+      await Promise.all([
+        new Promise(resolve => client1.on('connect', resolve)),
+        new Promise(resolve => client2.on('connect', resolve))
+      ]);
+
+      const initialUsers = await new Promise(resolve => client1.on('updateUsers', resolve));
+      expect(initialUsers.length).toBe(2);
+
+      client2.disconnect();
+      const finalUsers = await new Promise(resolve => client1.on('updateUsers', resolve));
+      expect(finalUsers.length).toBe(1);
+
+      client1.disconnect();
     });
   });
 });
