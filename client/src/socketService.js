@@ -68,7 +68,7 @@ export function createSocketConnection(
   });
 
   newSocket.on('notifChannel', (data) => {
-    console.log(data);
+    addNotification(data);
   });
 
   return newSocket;
