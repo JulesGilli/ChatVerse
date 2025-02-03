@@ -14,21 +14,21 @@ function isPrivateChannel(channelName) {
 
 function getPrivatePartnerName(channelName, myUserName) {
   const parts = channelName.split('_');
-  if (parts.length !== 2) return channelName;
+  if (parts.length !== 2) return channelName; 
 
   const [a, b] = parts;
   return a === myUserName ? b : a;
 }
 
 function Sidebar({
-  users,
-  myUserName,
-  joinedChannels,
-  onCommand,
-  currentFail,
-  selectedChannel,
+  users, 
+  myUserName,           
+  joinedChannels,   
+  onCommand,        
+  currentFail,      
+  selectedChannel,  
   onShowChannelList,
-  onSelectChannel,
+  onSelectChannel,  
 }) {
   const [showInput, setShowInput] = useState(false);
   const [actionType, setActionType] = useState('');
@@ -126,11 +126,24 @@ function Sidebar({
               <li
                 key={index}
                 onClick={() => handleChannelClick(channel.name)}
-                className={`channel-item ${isSelected ? 'selected-channel' : ''}`}
+                className={isSelected ? 'selected-channel' : ''}
+                style={{ display: 'flex', justifyContent: 'space-between' }}
               >
                 <span>{partner}</span>
                 {channel.unreadCount > 0 && (
-                  <span className="channel-badge">
+                  <span
+                    style={{
+                      backgroundColor: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '8px',
+                    }}
+                  >
                     {channel.unreadCount}
                   </span>
                 )}
@@ -154,11 +167,24 @@ function Sidebar({
               <li
                 key={index}
                 onClick={() => handleChannelClick(channel.name)}
-                className={`channel-item ${isSelected ? 'selected-channel' : ''}`}
+                className={isSelected ? 'selected-channel' : ''}
+                style={{ display: 'flex', justifyContent: 'space-between' }}
               >
                 <span>{channel.name}</span>
                 {channel.unreadCount > 0 && (
-                  <span className="channel-badge">
+                  <span
+                    style={{
+                      backgroundColor: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '20px',
+                      height: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '8px',
+                    }}
+                  >
                     {channel.unreadCount}
                   </span>
                 )}
