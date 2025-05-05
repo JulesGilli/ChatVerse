@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 import Sidebar from './components/Sidebar.jsx';
@@ -34,6 +34,13 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
 
   const [myUserName, setMyUserName] = useState('');
+
+  const currentUserIdRef = useRef(currentUserId);
+  const selectedChannelRef = useRef(selectedChannel);
+  
+  useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
+  useEffect(() => { selectedChannelRef.current = selectedChannel; }, [selectedChannel]);
+   
 
   function onUpdateUsers(newUsers) {
     console.log("== [CLIENT] updateUsers ==", newUsers);
@@ -97,20 +104,21 @@ function App() {
   // Callbacks Socket
   // =======================
   function handleNewMessage(message) {
+    const isOwnMessage = message.userId === currentUserIdRef.current;
+  
     setJoinedChannels((prev) => {
       let foundChannel = false;
-
+  
       const updated = prev.map((chan) => {
         if (chan.name === message.channel) {
           foundChannel = true;
-
+  
           const newMessages = [...chan.messages, message];
-
-          let newUnread = chan.unreadCount;
-          if (message.userId !== currentUserId && selectedChannel !== message.channel) {
-            newUnread += 1;
-          }
-
+          const newUnread =
+            !isOwnMessage && selectedChannelRef.current !== message.channel
+              ? chan.unreadCount + 1
+              : chan.unreadCount;
+  
           return {
             ...chan,
             messages: newMessages,
@@ -119,21 +127,30 @@ function App() {
         }
         return chan;
       });
-
+  
       if (!foundChannel) {
+        const initialUnread =
+          !isOwnMessage && selectedChannelRef.current !== message.channel ? 1 : 0;
         updated.push({
           name: message.channel,
           messages: [message],
-          unreadCount: 
-          message.userId !== currentUserId && selectedChannel !== message.channel ? 1 : 0,
-
+          unreadCount: initialUnread,
         });
       }
+  
       return updated;
     });
-
-    if (message.userId !== currentUserId && selectedChannel !== message.channel) {
-      addNotification(`Nouveau message dans #${message.channel} de ${message.userName}`);
+  
+    if (!isOwnMessage && selectedChannelRef.current !== message.channel) {
+      const isPrivate = message.channel.includes('_user');
+  
+      if (isPrivate) {
+        addNotification(`Nouveau message privé de ${message.userName}`);
+      } else {
+        addNotification(
+          `Nouveau message dans #${message.channel} de ${message.userName}`
+        );
+      }
     }
   }
 
@@ -296,7 +313,7 @@ function App() {
       if (prev.some((c) => c.name === channelName)) {
         return prev;
       }
-      return [...prev, { name: channelName, messages: [] }];
+      return [...prev, { name: channelName, messages: [], unreadCount: 0 }];
     });
     setSelectedChannel(channelName);
     handleChannelAction('join', channelName);

@@ -4,11 +4,9 @@ function ToastNotification({ message, onClose }) {
     const isError = message.toLowerCase().includes('error'); 
   
     useEffect(() => {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }, [onClose]);
+        const timer = setTimeout(onClose, 3000);
+        return () => clearTimeout(timer);
+      }, []); 
   
     return (
         <div className={`toast-notification ${isError ? 'toast-error' : ''}`}>
